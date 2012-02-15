@@ -109,6 +109,14 @@ namespace NzbDrone.Common
             return responseFromServer.Replace("&nbsp;", " ");
         }
 
-
+        public virtual string PostFile(string url, string header, byte[] data)
+        {
+            using (var webClient = new WebClient())
+            {
+                webClient.Headers.Add(header);
+                var response = webClient.UploadData(new Uri(url), "POST", data);
+                return Encoding.UTF8.GetString(response);
+            }
+        }
     }
 }

@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using Newtonsoft.Json;
@@ -73,21 +77,25 @@ namespace NzbDrone.Core.Providers.DownloadClients
             string cat = _configProvider.SabTvCategory;
             int priority = (int)_configProvider.SabTvPriority;
             string name = GetNzbName(url);
-            string nzbName = HttpUtility.UrlEncode(title);
+            string nzbName = title;
 
-            string action = string.Format("mode=addurl&name={0}&priority={1}&pp=3&cat={2}&nzbname={3}",
-                name, priority, cat, nzbName);
+            string action = string.Format("mode=addfile&priority={0}&pp=3&cat={1}", priority, cat);
 
-            if (url.ToLower().Contains("newzbin"))
-            {
-                action = action.Replace("mode=addurl", "mode=addid");
-            }
+            //Todo: How to handle download for Newzbin?
+            NetworkCredential credentials = null;
 
-            string request = GetSabRequest(action);
+            if (new Uri(url).Host.ToLower().Contains("newzbin"))
+                credentials = new NetworkCredential(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword);
+
+
+            string requestUrl = GetSabRequest(action);
+
+            //Todo: Download NZB using WebRequest/WebResponse so we read the response headers
+            logger.Debug("Downloading NZB as Stream: {0}", url);
+            var nzbStream = _httpProvider.DownloadStream(url, credentials);
 
             logger.Info("Adding report [{0}] to the queue.", title);
-
-            string response = _httpProvider.DownloadString(request).Replace("\n", String.Empty);
+            var response = UploadNzb(requestUrl, nzbName, nzbStream).Replace("\n", String.Empty);
             logger.Debug("Queue Response: [{0}]", response);
 
             if (response == "ok")
@@ -120,7 +128,6 @@ namespace NzbDrone.Core.Providers.DownloadClients
             var items = JsonConvert.DeserializeObject<SabHistory>(JObject.Parse(response).SelectToken("history").ToString()).Items;
             return items ?? new List<SabHistoryItem>();
         }
-
 
         public virtual SabCategoryModel GetCategories(string host = null, int port = 0, string apiKey = null, string username = null, string password = null)
         {
@@ -172,6 +179,43 @@ namespace NzbDrone.Core.Providers.DownloadClients
 
             if (result.Status != null && result.Status.Equals("false", StringComparison.InvariantCultureIgnoreCase))
                 throw new ApplicationException(result.Error);
+        }
+
+        public string UploadNzb(string url, string name, Stream nzbFile)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+
+                string boundary = string.Format("--------{0}", DateTime.Now.Ticks.ToString("x", CultureInfo.InvariantCulture));
+
+                sb.AppendFormat("--{0}", boundary);
+                sb.Append("\r\n");
+                sb.AppendFormat("Content-Disposition: form-data; name=\"name\"; filename=\"{0}\"", name);
+                sb.Append("\r\n");
+                sb.AppendFormat("Content-Type: application/x-nzb");
+                sb.Append("\r\n");
+                sb.Append("\r\n");
+
+                byte[] bufferHeader = Encoding.ASCII.GetBytes(sb.ToString());
+                byte[] bufferFooter = Encoding.ASCII.GetBytes(string.Format("\r\n--{0}--\r\n", boundary));
+
+                using (var requestStream = new MemoryStream())
+                {
+                    requestStream.Write(bufferHeader, 0, bufferHeader.Length);
+                    nzbFile.CopyTo(requestStream);
+                    requestStream.Write(bufferFooter, 0, bufferFooter.Length);
+
+                    var header = string.Format("Content-Type: multipart/form-data; boundary={0}", boundary);
+                    return _httpProvider.PostFile(url, header, requestStream.ToArray());
+                }
+            }
+            catch(Exception ex)
+            {
+                logger.WarnException("Failed to send NZB to SABnzb", ex);
+            }
+
+            return String.Empty;
         }
     }
 }
