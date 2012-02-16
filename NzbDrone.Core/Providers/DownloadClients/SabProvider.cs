@@ -75,25 +75,22 @@ namespace NzbDrone.Core.Providers.DownloadClients
         public virtual bool DownloadNzb(string url, string title)
         {
             string cat = _configProvider.SabTvCategory;
-            int priority = (int)_configProvider.SabTvPriority;
-            string name = GetNzbName(url);
+            int priority = (int)_configProvider.SabTvPriority;;
             string nzbName = title;
 
             string action = string.Format("mode=addfile&priority={0}&pp=3&cat={1}", priority, cat);
 
-            //Todo: How to handle download for Newzbin?
             NetworkCredential credentials = null;
-
             if (new Uri(url).Host.ToLower().Contains("newzbin"))
                 credentials = new NetworkCredential(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword);
 
-
             string requestUrl = GetSabRequest(action);
 
-            //Todo: Download NZB using WebRequest/WebResponse so we read the response headers
+            //Todo: Download NZB using WebRequest/WebResponse so we can handle downloading errors
             logger.Debug("Downloading NZB as Stream: {0}", url);
             var nzbStream = _httpProvider.DownloadStream(url, credentials);
 
+            //Todo: Handle SABnzbd returning nzo_id (0.7.0+) so we can track it
             logger.Info("Adding report [{0}] to the queue.", title);
             var response = UploadNzb(requestUrl, nzbName, nzbStream).Replace("\n", String.Empty);
             logger.Debug("Queue Response: [{0}]", response);
@@ -212,7 +209,7 @@ namespace NzbDrone.Core.Providers.DownloadClients
             }
             catch(Exception ex)
             {
-                logger.WarnException("Failed to send NZB to SABnzb", ex);
+                logger.WarnException("Failed to send NZB to SABnzbd", ex);
             }
 
             return String.Empty;

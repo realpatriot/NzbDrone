@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
@@ -43,28 +44,53 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
         private void WithFailResponse()
         {
             Mocker.GetMock<HttpProvider>()
-                    .Setup(s => s.DownloadString(It.IsAny<String>())).Returns("failed");
+                    .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
+                                            It.IsAny<String>(),
+                                            It.IsAny<Byte[]>())).Returns("failed");
+        }
+
+        private void WithNzbStreamNullCredentials()
+        {
+            Mocker.GetMock<HttpProvider>()
+                    .Setup(s => s.DownloadStream(It.IsAny<String>(), null)).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
+        }
+
+        private void WithNewzbinStream()
+        {
+            var fakeConfig = Mocker.GetMock<ConfigProvider>();
+
+            fakeConfig.SetupGet(c => c.NewzbinUsername).Returns("NzbDrone");
+            fakeConfig.SetupGet(c => c.NewzbinPassword).Returns("password");
+
+            Mocker.GetMock<HttpProvider>()
+                    .Setup(s => s.DownloadStream("http://www.newzbin.com/browse/post/6107863/nzb",
+                                                    It.Is<NetworkCredential>(n => n.UserName == "NzbDrone" && n.Password == "password"))).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         [Test]
         public void add_url_should_format_request_properly()
         {
             Mocker.GetMock<HttpProvider>(MockBehavior.Strict)
-                    .Setup(s => s.DownloadString("http://192.168.5.55:2222/api?mode=addurl&name=http://www.nzbclub.com/nzb_download.aspx?mid=1950232&priority=0&pp=3&cat=tv&nzbname=My+Series+Name+-+5x2-5x3+-+My+title+%5bBluray720p%5d+%5bProper%5d&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass"))
+                    .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
+                        It.IsAny<String>(),
+                        It.IsAny<Byte[]>()))
                     .Returns("ok");
+
+            WithNzbStreamNullCredentials();
 
             //Act
             Mocker.Resolve<SabProvider>().DownloadNzb(url, title).Should().BeTrue();
         }
 
-
         [Test]
         public void newzbin_add_url_should_format_request_properly()
         {
             Mocker.GetMock<HttpProvider>(MockBehavior.Strict)
-                    .Setup(s => s.DownloadString("http://192.168.5.55:2222/api?mode=addid&name=6107863&priority=0&pp=3&cat=tv&nzbname=My+Series+Name+-+5x2-5x3+-+My+title+%5bBluray720p%5d+%5bProper%5d&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass"))
+                    .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
+                        It.IsAny<String>(), It.IsAny<Byte[]>()))
                     .Returns("ok");
 
+            WithNewzbinStream();
 
             //Act
             bool result = Mocker.Resolve<SabProvider>().DownloadNzb("http://www.newzbin.com/browse/post/6107863/nzb", title);
@@ -76,6 +102,7 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
         [Test]
         public void add_by_url_should_detect_and_handle_sab_errors()
         {
+            WithNzbStreamNullCredentials();
             WithFailResponse();
 
             //Act
