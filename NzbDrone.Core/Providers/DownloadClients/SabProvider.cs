@@ -23,29 +23,20 @@ namespace NzbDrone.Core.Providers.DownloadClients
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         private readonly ConfigProvider _configProvider;
         private readonly HttpProvider _httpProvider;
+        private readonly NewzbinProvider _newzbinProvider;
 
         [Inject]
-        public SabProvider(ConfigProvider configProvider, HttpProvider httpProvider)
+        public SabProvider(ConfigProvider configProvider, HttpProvider httpProvider, 
+                            NewzbinProvider newzbinProvider)
         {
             _configProvider = configProvider;
             _httpProvider = httpProvider;
+            _newzbinProvider = newzbinProvider;
         }
 
 
         public SabProvider()
         {
-        }
-
-        private static string GetNzbName(string urlString)
-        {
-            var url = new Uri(urlString);
-            if (url.Host.ToLower().Contains("newzbin"))
-            {
-                var postId = Regex.Match(urlString, @"\d{5,10}").Value;
-                return postId;
-            }
-
-            return urlString.Replace("&", "%26");
         }
 
         public virtual bool IsInQueue(EpisodeParseResult newParseResult)
@@ -79,16 +70,27 @@ namespace NzbDrone.Core.Providers.DownloadClients
             string nzbName = title;
 
             string action = string.Format("mode=addfile&priority={0}&pp=3&cat={1}", priority, cat);
-
-            NetworkCredential credentials = null;
-            if (new Uri(url).Host.ToLower().Contains("newzbin"))
-                credentials = new NetworkCredential(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword);
-
             string requestUrl = GetSabRequest(action);
+            Stream nzbStream;
 
-            //Todo: Download NZB using WebRequest/WebResponse so we can handle downloading errors
-            logger.Debug("Downloading NZB as Stream: {0}", url);
-            var nzbStream = _httpProvider.DownloadStream(url, credentials);
+            if (new Uri(url).Host.ToLower().Contains("newzbin"))
+            {
+                logger.Debug("Downloading NZB as Stream: {0} (Newzbin)", url);
+                var postId = Int32.Parse(Regex.Match(url, @"\d{5,10}").Value);
+                nzbStream = _newzbinProvider.DownloadNzb(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword, postId);
+            }
+
+            else
+            {
+                logger.Debug("Downloading NZB as Stream: {0}", url);
+                nzbStream = _httpProvider.DownloadStream(url, null);
+            }
+            
+            if (nzbStream == null)
+            {
+                logger.Trace("NzbStream is null, cannot send to SABnzbd");
+                return false;
+            }
 
             //Todo: Handle SABnzbd returning nzo_id (0.7.0+) so we can track it
             logger.Info("Adding report [{0}] to the queue.", title);

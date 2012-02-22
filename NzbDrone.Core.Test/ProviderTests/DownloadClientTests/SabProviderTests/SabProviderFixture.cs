@@ -11,6 +11,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Common;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Providers;
 using NzbDrone.Core.Providers.Core;
 using NzbDrone.Core.Providers.DownloadClients;
 using NzbDrone.Core.Repository;
@@ -55,20 +56,17 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
                     .Setup(s => s.DownloadStream(It.IsAny<String>(), null)).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
-        private void WithNewzbinStream()
+        private void WithNewzbin()
         {
-            var fakeConfig = Mocker.GetMock<ConfigProvider>();
+            Mocker.GetMock<ConfigProvider>().SetupGet(s => s.NewzbinUsername).Returns("NzbDrone");
+            Mocker.GetMock<ConfigProvider>().SetupGet(s => s.NewzbinPassword).Returns("password");
 
-            fakeConfig.SetupGet(c => c.NewzbinUsername).Returns("NzbDrone");
-            fakeConfig.SetupGet(c => c.NewzbinPassword).Returns("password");
-
-            Mocker.GetMock<HttpProvider>()
-                    .Setup(s => s.DownloadStream("http://www.newzbin.com/browse/post/6107863/nzb",
-                                                    It.Is<NetworkCredential>(n => n.UserName == "NzbDrone" && n.Password == "password"))).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
+            Mocker.GetMock<NewzbinProvider>()
+                    .Setup(s => s.DownloadNzb("NzbDrone", "password", It.IsAny<int>())).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         [Test]
-        public void add_url_should_format_request_properly()
+        public void addfile_should_format_request_properly()
         {
             Mocker.GetMock<HttpProvider>(MockBehavior.Strict)
                     .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
@@ -83,24 +81,43 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
         }
 
         [Test]
-        public void newzbin_add_url_should_format_request_properly()
+        public void newzbin_addfile_should_use_NewzbinProvider_to_download_nzb()
         {
             Mocker.GetMock<HttpProvider>(MockBehavior.Strict)
                     .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
                         It.IsAny<String>(), It.IsAny<Byte[]>()))
                     .Returns("ok");
 
-            WithNewzbinStream();
+            WithNewzbin();
 
             //Act
             bool result = Mocker.Resolve<SabProvider>().DownloadNzb("http://www.newzbin.com/browse/post/6107863/nzb", title);
 
             //Assert
             result.Should().BeTrue();
+            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzb(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once());
+            Mocker.GetMock<HttpProvider>().Verify(v => v.DownloadStream(It.IsAny<String>(), null), Times.Never());
         }
 
         [Test]
-        public void add_by_url_should_detect_and_handle_sab_errors()
+        public void not_newzbin_should_use_HttpProvider_to_download_nzb()
+        {
+            Mocker.GetMock<HttpProvider>(MockBehavior.Strict)
+                    .Setup(s => s.PostFile("http://192.168.5.55:2222/api?mode=addfile&priority=0&pp=3&cat=tv&apikey=5c770e3197e4fe763423ee7c392c25d1&ma_username=admin&ma_password=pass",
+                        It.IsAny<String>(),
+                        It.IsAny<Byte[]>()))
+                    .Returns("ok");
+
+            WithNzbStreamNullCredentials();
+
+            //Act
+            Mocker.Resolve<SabProvider>().DownloadNzb(url, title).Should().BeTrue();
+            Mocker.GetMock<HttpProvider>().Verify(v => v.DownloadStream(It.IsAny<String>(), null), Times.Once());
+            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzb(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void addfile_should_detect_and_handle_sab_errors()
         {
             WithNzbStreamNullCredentials();
             WithFailResponse();
