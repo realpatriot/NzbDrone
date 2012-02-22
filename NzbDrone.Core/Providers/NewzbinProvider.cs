@@ -12,7 +12,7 @@ namespace NzbDrone.Core.Providers
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        public virtual Stream DownloadNzb(string username, string password, int id)
+        public virtual Stream DownloadNzbStream(string username, string password, int id)
         {
             //Follows Newzbin's X-DNZB Spec here: https://docs.newzbin2.es/index.php/Newzbin_API:DirectNZB
 
@@ -39,6 +39,16 @@ namespace NzbDrone.Core.Providers
             }
 
             return response.GetResponseStream();
+        }
+
+        public virtual void DownloadNzb(string username, string password, int id, string filename)
+        {
+            var stream = DownloadNzbStream(username, password, id);
+
+            using (Stream file = File.OpenWrite(filename))
+            {
+                stream.CopyTo(file);
+            }
         }
     }
 }

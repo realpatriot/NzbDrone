@@ -77,7 +77,7 @@ namespace NzbDrone.Core.Providers.DownloadClients
             {
                 logger.Debug("Downloading NZB as Stream: {0} (Newzbin)", url);
                 var postId = Int32.Parse(Regex.Match(url, @"\d{5,10}").Value);
-                nzbStream = _newzbinProvider.DownloadNzb(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword, postId);
+                nzbStream = _newzbinProvider.DownloadNzbStream(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword, postId);
             }
 
             else

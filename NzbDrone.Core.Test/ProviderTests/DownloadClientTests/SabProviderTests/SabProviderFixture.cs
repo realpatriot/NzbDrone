@@ -62,7 +62,7 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
             Mocker.GetMock<ConfigProvider>().SetupGet(s => s.NewzbinPassword).Returns("password");
 
             Mocker.GetMock<NewzbinProvider>()
-                    .Setup(s => s.DownloadNzb("NzbDrone", "password", It.IsAny<int>())).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
+                    .Setup(s => s.DownloadNzbStream("NzbDrone", "password", It.IsAny<int>())).Returns(File.Open(@"Files\SABnzbdTestNzb.nzb", FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         [Test]
@@ -95,7 +95,7 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
 
             //Assert
             result.Should().BeTrue();
-            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzb(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once());
+            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzbStream(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Once());
             Mocker.GetMock<HttpProvider>().Verify(v => v.DownloadStream(It.IsAny<String>(), null), Times.Never());
         }
 
@@ -113,7 +113,7 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests.SabProviderTests
             //Act
             Mocker.Resolve<SabProvider>().DownloadNzb(url, title).Should().BeTrue();
             Mocker.GetMock<HttpProvider>().Verify(v => v.DownloadStream(It.IsAny<String>(), null), Times.Once());
-            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzb(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<NewzbinProvider>().Verify(v => v.DownloadNzbStream(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never());
         }
 
         [Test]

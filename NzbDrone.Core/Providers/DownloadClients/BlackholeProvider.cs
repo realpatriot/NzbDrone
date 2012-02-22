@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NLog;
 using Ninject;
 using NzbDrone.Common;
@@ -16,18 +17,20 @@ namespace NzbDrone.Core.Providers.DownloadClients
         private readonly HttpProvider _httpProvider;
         private readonly DiskProvider _diskProvider;
         private readonly UpgradeHistorySpecification _upgradeHistorySpecification;
+        private readonly NewzbinProvider _newzbinProvider;
         private readonly HistoryProvider _historyProvider;
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         [Inject]
         public BlackholeProvider(ConfigProvider configProvider, HttpProvider httpProvider,
-                                    DiskProvider diskProvider, UpgradeHistorySpecification upgradeHistorySpecification)
+                                    DiskProvider diskProvider, UpgradeHistorySpecification upgradeHistorySpecification, NewzbinProvider newzbinProvider)
         {
             _configProvider = configProvider;
             _httpProvider = httpProvider;
             _diskProvider = diskProvider;
             _upgradeHistorySpecification = upgradeHistorySpecification;
+            _newzbinProvider = newzbinProvider;
         }
 
         public BlackholeProvider()
@@ -48,7 +51,14 @@ namespace NzbDrone.Core.Providers.DownloadClients
                 }
 
                 logger.Trace("Downloading NZB from: {0} to: {1}", url, filename);
-                _httpProvider.DownloadFile(url, filename);
+                if (new Uri(url).Host.ToLower().Contains("newzbin"))
+                {
+                    var postId = Int32.Parse(Regex.Match(url, @"\d{5,10}").Value);
+                    _newzbinProvider.DownloadNzb(_configProvider.NewzbinUsername, _configProvider.NewzbinPassword, postId, filename);
+                }
+
+                else
+                    _httpProvider.DownloadFile(url, filename);
 
                 logger.Trace("NZB Download succeeded, saved to: {0}", filename);
                 return true;
