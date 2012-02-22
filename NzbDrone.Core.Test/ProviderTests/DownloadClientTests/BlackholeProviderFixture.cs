@@ -7,6 +7,7 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common;
+using NzbDrone.Core.Providers;
 using NzbDrone.Core.Providers.Core;
 using NzbDrone.Core.Providers.DownloadClients;
 using NzbDrone.Core.Test.Framework;
@@ -21,6 +22,8 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests
         private const string title = "some_nzb_title";
         private const string blackHoleFolder = @"d:\nzb\blackhole\";
         private const string nzbPath = @"d:\nzb\blackhole\some_nzb_title.nzb";
+        private const string newzbinUrl = "http://www.newzbin.com/browse/post/6107863/nzb";
+        private const int newzbinId = 6107863;
 
         [SetUp]
         public void Setup()
@@ -67,6 +70,15 @@ namespace NzbDrone.Core.Test.ProviderTests.DownloadClientTests
             ExceptionVerification.ExpectedWarns(1);
         }
 
+        [Test]
+        public void DownloadNzb_should_download_newzbin_nzb_via_NewzbinProvider()
+        {
+            Mocker.GetMock<ConfigProvider>().SetupGet(s => s.NewzbinUsername).Returns("NzbDrone");
+            Mocker.GetMock<ConfigProvider>().SetupGet(s => s.NewzbinPassword).Returns("password");
 
+            Mocker.Resolve<BlackholeProvider>().DownloadNzb(newzbinUrl, title).Should().BeTrue();
+
+            Mocker.GetMock<NewzbinProvider>().Verify(c => c.DownloadNzb("NzbDrone", "password", newzbinId, nzbPath), Times.Once());
+        }
     }
 }
