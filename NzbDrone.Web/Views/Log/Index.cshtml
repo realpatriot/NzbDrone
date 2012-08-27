@@ -3,8 +3,8 @@
 @{ ViewBag.Title = "Logs";}
 @section ActionMenu{
     <ul class="sub-menu">
-        <li>@Ajax.ActionLink("Clear Logs", "Clear", "Log", new AjaxOptions { OnSuccess = "redrawGrid" })</li>
-        <li>@Html.ActionLink("File", "File", "Log")</li>
+        <li>@Ajax.ActionLink("Clear Logs", "Clear", "Log", null, new AjaxOptions{ OnSuccess = "redrawGrid", Confirm = "Delete all logs?" }, new { Title = "Delete all logs" })</li>
+        <li>@Html.ActionLink("File", "File", "Log", null, new { Title = "View debug log file" })</li>
     </ul>
 }
 @section HeaderContent{
@@ -50,7 +50,7 @@
 
             oTable = $('#logGrid').dataTable({
                 "sAjaxSource": "Log/AjaxBinding",
-                "bProcessing": true,
+                "bProcessing": false,
                 "bServerSide": true,
                 "bShowAll": false,
                 "bPaginate": true,
@@ -63,7 +63,7 @@
                 "sPaginationType": "four_button",
                 "aoColumns": [
                                 { sWidth: '150px', "mDataProp": "Time" }, //Time
-                                {sWidth: '80px', "mDataProp": "Level" }, //Level
+                                {sWidth: '60px', "mDataProp": "Level" }, //Level
                                 {sWidth: '240px', "mDataProp": "Source" }, //Source
                                 {sWidth: 'auto', "mDataProp": "Message", "bSortable": false }, //Message
                                 {sWidth: 'auto', "mDataProp": "Details", "bSortable": false, "bVisible": false, "fnRender": function (row) {
@@ -86,8 +86,6 @@
         });
 
         function fnRowCallback(nRow, aData) {
-            //e.row.style.boarder = "";
-
             if (aData["Level"] == "Warn") {
                 nRow.style.backgroundColor = "#FFD700";
             }

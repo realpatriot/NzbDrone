@@ -49,6 +49,10 @@ namespace NzbDrone.Core.Providers.Indexer
             return item.Links[0].Uri.ToString();
         }
 
+        protected override string NzbInfoUrl(SyndicationItem item)
+        {
+            return item.Links[0].Uri.ToString();
+        }
 
         protected override IList<string> GetEpisodeSearchUrls(string seriesTitle, int seasonNumber, int episodeNumber)
         {
@@ -75,9 +79,9 @@ namespace NzbDrone.Core.Providers.Indexer
             if (currentResult != null)
             {
                 var sizeString = Regex.Match(item.Summary.Text, @"\d+\.\d{1,2} \w{3}", RegexOptions.IgnoreCase).Value;
-
                 currentResult.Size = Parser.GetReportSize(sizeString);
             }
+
             return currentResult;
         }
     }

@@ -25,7 +25,7 @@ namespace NzbDrone.Core.Test.Framework
             }
 
             //Delete App_data folder
-            var appData = new EnviromentProvider().GetAppDataPath();
+            var appData = new EnvironmentProvider().GetAppDataPath();
 
             if (Directory.Exists(appData))
             {
@@ -61,6 +61,11 @@ namespace NzbDrone.Core.Test.Framework
             {
                 return new ProgressNotification("Mock notification");
             }
+        }
+
+        protected static void ThrowException()
+        {
+            throw new ApplicationException("This is a message for test exception");
         }
 
         [TearDown]

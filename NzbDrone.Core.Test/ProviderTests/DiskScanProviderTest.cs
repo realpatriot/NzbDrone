@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Common;
+using NzbDrone.Core.Model;
 using NzbDrone.Core.Providers;
 using NzbDrone.Core.Providers.Core;
 using NzbDrone.Core.Repository;
@@ -116,6 +118,9 @@ namespace NzbDrone.Core.Test.ProviderTests
             Mocker.GetMock<MediaFileProvider>()
                 .Setup(e => e.Delete(It.IsAny<int>()));
 
+            Mocker.GetMock<ConfigProvider>()
+                .SetupGet(s => s.AutoIgnorePreviouslyDownloadedEpisodes)
+                .Returns(true);
 
             //Act
             Mocker.Resolve<DiskScanProvider>().CleanUp(episodes);
@@ -196,7 +201,7 @@ namespace NzbDrone.Core.Test.ProviderTests
                 .Returns(fakeEpisode);
 
             Mocker.GetMock<MediaFileProvider>()
-                .Setup(e => e.GetNewFilename(fakeEpisode, fakeSeries.Title, It.IsAny<QualityTypes>(), It.IsAny<bool>()))
+                .Setup(e => e.GetNewFilename(fakeEpisode, fakeSeries.Title, It.IsAny<QualityTypes>(), It.IsAny<bool>(), It.IsAny<EpisodeFile>()))
                 .Returns(filename);
 
             Mocker.GetMock<MediaFileProvider>()
@@ -207,7 +212,165 @@ namespace NzbDrone.Core.Test.ProviderTests
             var result = Mocker.Resolve<DiskScanProvider>().MoveEpisodeFile(file, false);
 
             //Assert
-            result.Should().BeFalse();
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void CleanUpDropFolder_should_do_nothing_if_no_files_are_found()
+        {
+            //Setup
+            var folder = @"C:\Test\DropDir\The Office";
+            
+            Mocker.GetMock<DiskProvider>().Setup(s => s.GetFiles(folder, SearchOption.AllDirectories))
+                    .Returns(new string[0]);
+
+            //Act
+            Mocker.Resolve<DiskScanProvider>().CleanUpDropFolder(folder);
+
+            //Assert
+            Mocker.GetMock<MediaFileProvider>().Verify(v => v.GetFileByPath(It.IsAny<string>()), Times.Never());
+        }
+
+        [Test]
+        public void CleanUpDropFolder_should_do_nothing_if_no_conflicting_files_are_found()
+        {
+            //Setup
+            var folder = @"C:\Test\DropDir\The Office";
+            var filename = Path.Combine(folder, "NotAProblem.avi");
+
+            var episodeFile = Builder<EpisodeFile>.CreateNew()
+                    .With(f => f.Path = filename.NormalizePath())
+                    .With(f => f.SeriesId = 12345)
+                    .Build();
+
+            Mocker.GetMock<DiskProvider>().Setup(s => s.GetFiles(folder, SearchOption.AllDirectories))
+                    .Returns(new string[] { filename });
+
+            Mocker.GetMock<MediaFileProvider>().Setup(s => s.GetFileByPath(filename))
+                    .Returns(() => null);
+
+            //Act
+            Mocker.Resolve<DiskScanProvider>().CleanUpDropFolder(folder);
+
+            //Assert
+            Mocker.GetMock<MediaFileProvider>().Verify(v => v.GetFileByPath(filename), Times.Once());
+            Mocker.GetMock<SeriesProvider>().Verify(v => v.GetSeries(It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void CleanUpDropFolder_should_move_file_if_a_conflict_is_found()
+        {
+            //Setup
+            var folder = @"C:\Test\DropDir\The Office";
+            var filename = Path.Combine(folder, "Problem.avi");
+            var seriesId = 12345;
+            var newFilename = "S01E01 - Title";
+            var newFilePath = @"C:\Test\TV\The Office\Season 01\S01E01 - Title.avi";
+
+            var episodeFile = Builder<EpisodeFile>.CreateNew()
+                   .With(f => f.Path = filename.NormalizePath())
+                   .With(f => f.SeriesId = seriesId)
+                   .Build();
+
+            var series = Builder<Series>.CreateNew()
+                    .With(s => s.SeriesId = seriesId)
+                    .With(s => s.Title = "The Office")
+                    .Build();
+
+            var episode = Builder<Episode>.CreateListOfSize(1)
+                .All()
+                    .With(e => e.SeriesId = seriesId)
+                    .With(e => e.EpisodeFileId = episodeFile.EpisodeFileId)
+                    .Build();
+
+            Mocker.GetMock<MediaFileProvider>().Setup(v => v.GetFileByPath(filename))
+                   .Returns(() => null);
+
+            Mocker.GetMock<DiskProvider>().Setup(s => s.GetFiles(folder, SearchOption.AllDirectories))
+                    .Returns(new string[] { filename });
+
+            Mocker.GetMock<MediaFileProvider>().Setup(s => s.GetFileByPath(filename))
+                    .Returns(episodeFile);
+
+            Mocker.GetMock<SeriesProvider>().Setup(s => s.GetSeries(It.IsAny<int>()))
+                .Returns(series);
+
+            Mocker.GetMock<EpisodeProvider>().Setup(s => s.GetEpisodesByFileId(episodeFile.EpisodeFileId))
+                    .Returns(episode);
+
+            Mocker.GetMock<MediaFileProvider>().Setup(s => s.GetNewFilename(It.IsAny<IList<Episode>>(), series.Title, QualityTypes.Unknown, false, It.IsAny<EpisodeFile>()))
+                .Returns(newFilename);
+
+            Mocker.GetMock<MediaFileProvider>().Setup(s => s.CalculateFilePath(It.IsAny<Series>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()))
+                    .Returns(new FileInfo(newFilePath));
+
+            Mocker.GetMock<DiskProvider>().Setup(s => s.MoveFile(episodeFile.Path, newFilePath));
+
+            //Act
+            Mocker.Resolve<DiskScanProvider>().CleanUpDropFolder(folder);
+
+            //Assert
+            Mocker.GetMock<MediaFileProvider>().Verify(v => v.GetFileByPath(filename), Times.Once());
+            Mocker.GetMock<DiskProvider>().Verify(v => v.MoveFile(filename.NormalizePath(), newFilePath), Times.Once());
+        }
+
+        [Test]
+        public void MoveEpisodeFile_should_use_EpisodeFiles_quality()
+        {
+            var fakeSeries = Builder<Series>.CreateNew()
+                    .With(s => s.SeriesId = 5)
+                    .With(s => s.Title = "30 Rock")
+                    .Build();
+
+            var fakeEpisode = Builder<Episode>.CreateListOfSize(1)
+                    .All()
+                    .With(e => e.SeriesId = fakeSeries.SeriesId)
+                    .With(e => e.SeasonNumber = 1)
+                    .With(e => e.EpisodeNumber = 1)
+                    .Build();
+
+            const string filename = @"30 Rock - S01E01 - TBD";
+            var fi = new FileInfo(Path.Combine(@"C:\Test\TV\30 Rock\Season 01\", filename + ".mkv"));
+            var currentFilename = Path.Combine(@"C:\Test\TV\30 Rock\Season 01\", "30.Rock.S01E01.Test.WED-DL.mkv");
+            const string message = "30 Rock - 1x01 - [WEBDL]";
+
+            var file = Builder<EpisodeFile>.CreateNew()
+                    .With(f => f.SeriesId = fakeSeries.SeriesId)
+                    .With(f => f.Path = currentFilename)
+                    .With(f => f.Quality = QualityTypes.WEBDL)
+                    .With(f => f.Proper = false)
+                    .Build();
+
+            Mocker.GetMock<SeriesProvider>()
+                .Setup(e => e.GetSeries(fakeSeries.SeriesId))
+                .Returns(fakeSeries);
+
+            Mocker.GetMock<EpisodeProvider>()
+                .Setup(e => e.GetEpisodesByFileId(file.EpisodeFileId))
+                .Returns(fakeEpisode);
+
+            Mocker.GetMock<MediaFileProvider>()
+                .Setup(e => e.GetNewFilename(fakeEpisode, fakeSeries.Title, It.IsAny<QualityTypes>(), It.IsAny<bool>(), It.IsAny<EpisodeFile>()))
+                .Returns(filename);
+
+            Mocker.GetMock<MediaFileProvider>()
+                .Setup(e => e.CalculateFilePath(It.IsAny<Series>(), fakeEpisode.First().SeasonNumber, filename, ".mkv"))
+                .Returns(fi);
+
+            Mocker.GetMock<DownloadProvider>()
+                    .Setup(s => s.GetDownloadTitle(It.Is<EpisodeParseResult>(e => e.Quality == new Quality{ QualityType = QualityTypes.WEBDL, Proper = false })))
+                    .Returns(message);
+
+            Mocker.GetMock<ExternalNotificationProvider>()
+                    .Setup(e => e.OnDownload("30 Rock - 1x01 - [WEBDL]", It.IsAny<Series>()));
+
+            //Act
+            var result = Mocker.Resolve<DiskScanProvider>().MoveEpisodeFile(file, true);
+
+            //Assert
+            result.Should().NotBeNull();
+            Mocker.GetMock<ExternalNotificationProvider>()
+                    .Verify(e => e.OnDownload("30 Rock - 1x01 - [WEBDL]", It.IsAny<Series>()), Times.Once());
         }
     }
 }

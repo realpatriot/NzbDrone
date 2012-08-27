@@ -44,6 +44,14 @@ namespace NzbDrone.Core.Test.ProviderTests.DecisionEngineTests
             Mocker.GetMock<AlreadyInQueueSpecification>()
                     .Setup(c => c.IsSatisfiedBy(It.IsAny<EpisodeParseResult>()))
                     .Returns(false);
+
+            Mocker.GetMock<RetentionSpecification>()
+                    .Setup(c => c.IsSatisfiedBy(It.IsAny<EpisodeParseResult>()))
+                    .Returns(true);
+
+            Mocker.GetMock<AllowedReleaseGroupSpecification>()
+                    .Setup(c => c.IsSatisfiedBy(It.IsAny<EpisodeParseResult>()))
+                    .Returns(true);
         }
 
         private void WithProfileNotAllowed()
@@ -74,38 +82,52 @@ namespace NzbDrone.Core.Test.ProviderTests.DecisionEngineTests
                     .Returns(true);
         }
 
+        private void WithOverRetention()
+        {
+            Mocker.GetMock<RetentionSpecification>()
+                    .Setup(c => c.IsSatisfiedBy(It.IsAny<EpisodeParseResult>()))
+                    .Returns(false);
+        }
+
         [Test]
         public void should_be_allowed_if_all_conditions_are_met()
         {
-            spec.IsSatisfiedBy(parseResult).Should().BeTrue();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.None);
         }
 
         [Test]
         public void should_not_be_allowed_if_profile_is_not_allowed()
         {
             WithProfileNotAllowed();
-            spec.IsSatisfiedBy(parseResult).Should().BeFalse();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.QualityNotWanted);
         }
 
         [Test]
         public void should_not_be_allowed_if_size_is_not_allowed()
         {
             WithNotAcceptableSize();
-            spec.IsSatisfiedBy(parseResult).Should().BeFalse();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.Size);
         }
 
         [Test]
         public void should_not_be_allowed_if_disk_is_not_upgrade()
         {
             WithNoDiskUpgrade();
-            spec.IsSatisfiedBy(parseResult).Should().BeFalse();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.ExistingQualityIsEqualOrBetter);
         }
 
         [Test]
         public void should_not_be_allowed_if_episode_is_already_in_queue()
         {
             WithEpisodeAlreadyInQueue();
-            spec.IsSatisfiedBy(parseResult).Should().BeFalse();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.AlreadyInQueue);
+        }
+
+        [Test]
+        public void should_not_be_allowed_if_report_is_over_retention()
+        {
+            WithOverRetention();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.Retention);
         }
 
         [Test]
@@ -114,8 +136,9 @@ namespace NzbDrone.Core.Test.ProviderTests.DecisionEngineTests
             WithNoDiskUpgrade();
             WithNotAcceptableSize();
             WithProfileNotAllowed();
+            WithOverRetention();
 
-            spec.IsSatisfiedBy(parseResult).Should().BeFalse();
+            spec.IsSatisfiedBy(parseResult).Should().Be(ReportRejectionType.QualityNotWanted);
         }
     }
 }

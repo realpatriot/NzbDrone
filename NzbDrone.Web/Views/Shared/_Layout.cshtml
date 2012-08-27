@@ -2,6 +2,7 @@
 @{ Layout = "~/Views/Shared/_ReferenceLayout.cshtml"; }
 @using NzbDrone.Common
 @using NzbDrone.Web.Helpers
+@using StackExchange.Profiling
 @section HeaderContent
 {
     @if (string.IsNullOrWhiteSpace(ViewBag.Title) || String.Equals(ViewBag.Title, "NzbDrone", StringComparison.InvariantCultureIgnoreCase))
@@ -13,10 +14,11 @@
         ViewBag.Title = String.Format("{0} - NzbDrone", ViewBag.Title);
     }
     <title>@ViewBag.Title</title>
-    @if (!EnviromentProvider.IsProduction || ProfilerHelper.Enabled())
+    @if (!EnvironmentProvider.IsProduction || ProfilerHelper.Enabled())
     {
-        @MvcMiniProfiler.MiniProfiler.RenderIncludes()
+        @MiniProfiler.RenderIncludes()
     }
+    @Html.IncludeCss("Grid.css")
     @RenderSection("HeaderContent", required: false)
 }
 <div id="centered">
@@ -48,20 +50,6 @@
 @section Scripts
 {
     @RenderSection("Scripts", required: false)
-    @if (EnviromentProvider.IsProduction)
-    {
-        <script type="text/javascript">
-            var _gaq = _gaq || [];
-            _gaq.push(['_setAccount', 'UA-8318723-7']);
-            _gaq.push(['_setDomainName', 'none']);
-            _gaq.push(['_setAllowLinker', true]);
-            _gaq.push(['_trackPageview']);
-
-            (function () {
-                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-            })();
-        </script>
-    }
+    @Html.IncludeScript("jquery.signalR.min.js")
+    <script src="@Url.Content("~/signalr/hubs")" type="text/javascript"></script>
 }

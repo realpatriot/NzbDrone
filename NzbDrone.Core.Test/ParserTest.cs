@@ -62,6 +62,15 @@ namespace NzbDrone.Core.Test
         [TestCase("S6E02-Unwrapped-(Playing With Food) - [DarkData]", "", 6, 2)]
         [TestCase("S06E03-Unwrapped-(Number Ones Unwrapped) - [DarkData]", "", 6, 3)]
         [TestCase("The Mentalist S02E21 18 5 4 720p WEB DL DD5 1 h 264 EbP", "The Mentalist", 2, 21)]
+        [TestCase("01x04 - Halloween, Part 1 - 720p WEB-DL", "", 1, 4)]
+        [TestCase("extras.s03.e05.ws.dvdrip.xvid-m00tv", "Extras", 3, 5)]
+        [TestCase("castle.2009.416.hdtv-lol", "Castle 2009", 4, 16)]
+        [TestCase("hawaii.five-0.2010.217.hdtv-lol", "Hawaii Five-0 (2010)", 2, 17)]
+        [TestCase("Looney Tunes - S1936E18 - I Love to Singa", "Looney Tunes", 1936, 18)]
+        [TestCase("American_Dad!_-_7x6_-_The_Scarlett_Getter_[SDTV]", "American Dad!", 7, 6)]
+        [TestCase("Falling_Skies_-_1x1_-_Live_and_Learn_[HDTV]", "Falling Skies", 1, 1)]
+        [TestCase("Top Gear - 07x03 - 2005.11.70", "Top Gear", 7, 3)]
+        [TestCase("Hatfields and McCoys 2012 Part 1 REPACK 720p HDTV x264 2HD", "Hatfields and McCoys 2012", 1, 1)]
         public void ParseTitle_single(string postTitle, string title, int seasonNumber, int episodeNumber)
         {
             var result = Parser.ParseTitle(postTitle);
@@ -152,6 +161,18 @@ namespace NzbDrone.Core.Test
         [TestCase("The Voice S01E11 The Finals 1080i HDTV DD5.1 MPEG2-TrollHD", QualityTypes.Unknown, false)]
         [TestCase("Nikita S02E01 HDTV XviD 2HD", QualityTypes.SDTV, false)]
         [TestCase("Gossip Girl S05E11 PROPER HDTV XviD 2HD", QualityTypes.SDTV, true)]
+        [TestCase("The Jonathan Ross Show S02E08 HDTV x264 FTP", QualityTypes.SDTV, false)]
+        [TestCase("White.Van.Man.2011.S02E01.WS.PDTV.x264-TLA", QualityTypes.SDTV, false)]
+        [TestCase("White.Van.Man.2011.S02E01.WS.PDTV.x264-REPACK-TLA", QualityTypes.SDTV, true)]
+        [TestCase("WEEDS.S03E01-06.DUAL.XviD.Bluray.AC3-REPACK.-HELLYWOOD.avi", QualityTypes.DVD, true)]
+        [TestCase("Pawn Stars S04E87 REPACK 720p HDTV x264 aAF", QualityTypes.HDTV, true)]
+        [TestCase("The Real Housewives of Vancouver S01E04 DSR x264 2HD", QualityTypes.SDTV, false)]
+        [TestCase("Vanguard S01E04 Mexicos Death Train DSR x264 MiNDTHEGAP", QualityTypes.SDTV, false)]
+        [TestCase("Vanguard S01E04 Mexicos Death Train 720 WEB DL", QualityTypes.WEBDL, false)]
+        [TestCase("Hawaii Five 0 S02E21 720p WEB DL DD5 1 H 264", QualityTypes.WEBDL, false)]
+        [TestCase("Castle S04E22 720p WEB DL DD5 1 H 264 NFHD", QualityTypes.WEBDL, false)]
+        [TestCase("Fringe S04E22 720p WEB-DL DD5.1 H264-EbP.mkv", QualityTypes.WEBDL, false)]
+        [TestCase("Fringe.S04E22.720p.WEB.DL.DD5.1.H264-EbP", QualityTypes.WEBDL, false)]
         public void quality_parse(string postTitle, object quality, bool proper)
         {
             var result = Parser.ParseQuality(postTitle);
@@ -164,7 +185,6 @@ namespace NzbDrone.Core.Test
         {
             var qualityEnums = Enum.GetValues(typeof(QualityTypes));
 
-
             foreach (var qualityEnum in qualityEnums)
             {
                 var fileName = String.Format("My series S01E01 [{0}]", qualityEnum);
@@ -173,27 +193,29 @@ namespace NzbDrone.Core.Test
             }
         }
 
-        [Timeout(1000)]
-        [TestCase("WEEDS.S03E01-06.DUAL.BDRip.XviD.AC3.-HELLYWOOD", "WEEDS", 3, new[] { 1, 2, 3, 4, 5, 6 }, 6)]
-        [TestCase("Two.and.a.Half.Men.103.104.720p.HDTV.X264-DIMENSION", "Two.and.a.Half.Men", 1, new[] { 3, 4 }, 2)]
-        [TestCase("Weeds.S03E01.S03E02.720p.HDTV.X264-DIMENSION", "Weeds", 3, new[] { 1, 2 }, 2)]
-        [TestCase("The Borgias S01e01 e02 ShoHD On Demand 1080i DD5 1 ALANiS", "The Borgias", 1, new[] { 1, 2 }, 2)]
-        [TestCase("White.Collar.2x04.2x05.720p.BluRay-FUTV", "White.Collar", 2, new[] { 4, 5 }, 2)]
-        [TestCase("Desperate.Housewives.S07E22E23.720p.HDTV.X264-DIMENSION", "Desperate.Housewives", 7, new[] { 22, 23 }, 2)]
-        [TestCase("Desparate Housewives - S07E22 - S07E23 - And Lots of Security.. [HDTV].mkv", "Desparate Housewives", 7, new[] { 22, 23 }, 2)]
-        [TestCase("S03E01.S03E02.720p.HDTV.X264-DIMENSION", "", 3, new[] { 1, 2 }, 2)]
-        [TestCase("Desparate Housewives - S07E22 - 7x23 - And Lots of Security.. [HDTV].mkv", "Desparate Housewives", 7, new[] { 22, 23 }, 2)]
-        [TestCase("S07E22 - 7x23 - And Lots of Security.. [HDTV].mkv", "", 7, new[] { 22, 23 }, 2)]
-        [TestCase("2x04x05.720p.BluRay-FUTV", "", 2, new[] { 4, 5 }, 2)]
-        [TestCase("S02E04E05.720p.BluRay-FUTV", "", 2, new[] { 4, 5 }, 2)]
-        public void TitleParse_multi(string postTitle, string title, int season, int[] episodes, int count)
+        //[Timeout(1000)]
+        [TestCase("WEEDS.S03E01-06.DUAL.BDRip.XviD.AC3.-HELLYWOOD", "WEEDS", 3, new[] { 1, 2, 3, 4, 5, 6 })]
+        [TestCase("Two.and.a.Half.Men.103.104.720p.HDTV.X264-DIMENSION", "Two.and.a.Half.Men", 1, new[] { 3, 4 })]
+        [TestCase("Weeds.S03E01.S03E02.720p.HDTV.X264-DIMENSION", "Weeds", 3, new[] { 1, 2 })]
+        [TestCase("The Borgias S01e01 e02 ShoHD On Demand 1080i DD5 1 ALANiS", "The Borgias", 1, new[] { 1, 2 })]
+        [TestCase("White.Collar.2x04.2x05.720p.BluRay-FUTV", "White.Collar", 2, new[] { 4, 5 })]
+        [TestCase("Desperate.Housewives.S07E22E23.720p.HDTV.X264-DIMENSION", "Desperate.Housewives", 7, new[] { 22, 23 })]
+        [TestCase("Desparate Housewives - S07E22 - S07E23 - And Lots of Security.. [HDTV].mkv", "Desparate Housewives", 7, new[] { 22, 23 })]
+        [TestCase("S03E01.S03E02.720p.HDTV.X264-DIMENSION", "", 3, new[] { 1, 2 })]
+        [TestCase("Desparate Housewives - S07E22 - 7x23 - And Lots of Security.. [HDTV].mkv", "Desparate Housewives", 7, new[] { 22, 23 })]
+        [TestCase("S07E22 - 7x23 - And Lots of Security.. [HDTV].mkv", "", 7, new[] { 22, 23 })]
+        [TestCase("2x04x05.720p.BluRay-FUTV", "", 2, new[] { 4, 5 })]
+        [TestCase("S02E04E05.720p.BluRay-FUTV", "", 2, new[] { 4, 5 })]
+        [TestCase("S02E03-04-05.720p.BluRay-FUTV", "", 2, new[] { 3,4,5 })]
+        [TestCase("Breakout.Kings.S02E09-E10.HDTV.x264-ASAP", "Breakout Kings", 2, new[] { 9, 10 })]
+        [TestCase("Breakout Kings - 2x9-2x10 - Served Cold [SDTV] ", "Breakout Kings", 2, new[] { 9, 10 })]
+        [TestCase("Breakout Kings - 2x09-2x10 - Served Cold [SDTV] ", "Breakout Kings", 2, new[] { 9, 10 })]
+        public void TitleParse_multi(string postTitle, string title, int season, int[] episodes)
         {
             var result = Parser.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);
-            result.EpisodeNumbers.Should().HaveSameCount(episodes);
-            result.EpisodeNumbers.Should().BeEquivalentTo(result.EpisodeNumbers);
+            result.EpisodeNumbers.Should().BeEquivalentTo(episodes);
             result.CleanTitle.Should().Be(Parser.NormalizeTitle(title));
-            result.EpisodeNumbers.Count.Should().Be(count);
             result.OriginalString.Should().Be(postTitle);
         }
 
@@ -205,10 +227,14 @@ namespace NzbDrone.Core.Test
         [TestCase("2011.01.10 - Denis Leary - HD TV.mkv", "", 2011, 1, 10)]
         [TestCase("2011.03.13 - Denis Leary - HD TV.mkv", "", 2011, 3, 13)]
         [TestCase("The Tonight Show with Jay Leno - 2011-06-16 - Larry David, \"Bachelorette\" Ashley Hebert, Pitbull with Ne-Yo", "The Tonight Show with Jay Leno", 2011, 6, 16)]
+        [TestCase("2020.NZ.2012.16.02.PDTV.XviD-C4TV","2020nz", 2012,2, 16)]
+        [TestCase("2020.NZ.2012.13.02.PDTV.XviD-C4TV","2020nz", 2012,2, 13)]
+        [TestCase("2020.NZ.2011.12.02.PDTV.XviD-C4TV","2020nz", 2011,12, 2)]
         public void parse_daily_episodes(string postTitle, string title, int year, int month, int day)
         {
             var result = Parser.ParseTitle(postTitle);
             var airDate = new DateTime(year, month, day);
+            result.Should().NotBeNull();
             result.CleanTitle.Should().Be(Parser.NormalizeTitle(title));
             result.AirDate.Should().Be(airDate);
             result.EpisodeNumbers.Should().BeNull();
@@ -249,8 +275,6 @@ namespace NzbDrone.Core.Test
             result.Should().Be(seriesName);
         }
 
-
-
         [TestCase("CaPitAl", "capital")]
         [TestCase("peri.od", "period")]
         [TestCase("this.^&%^**$%@#$!That", "thisthat")]
@@ -262,7 +286,6 @@ namespace NzbDrone.Core.Test
             var result = Parser.NormalizeTitle(dirty);
             result.Should().Be(clean);
         }
-
 
         [TestCase("the")]
         [TestCase("and")]
@@ -332,7 +355,6 @@ namespace NzbDrone.Core.Test
             var result = Parser.ParseSeriesName(postTitle);
             result.Should().Be(Parser.NormalizeTitle(title));
         }
-
 
         [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", LanguageType.English)]
         [TestCase("Castle.2009.S01E14.French.HDTV.XviD-LOL", LanguageType.French)]
@@ -417,6 +439,17 @@ namespace NzbDrone.Core.Test
             Parser.ParseTitle(title);
             ExceptionVerification.IgnoreWarns();
             ExceptionVerification.ExpectedErrors(1);
+        }
+
+        [TestCase("Castle.2009.S01E14.English.HDTV.XviD-LOL", "LOL")]
+        [TestCase("Castle 2009 S01E14 English HDTV XviD LOL", "LOL")]
+        [TestCase("Acropolis Now S05 EXTRAS DVDRip XviD RUNNER", "RUNNER")]
+        [TestCase("Punky.Brewster.S01.EXTRAS.DVDRip.XviD-RUNNER", "RUNNER")]
+        [TestCase("2020.NZ.2011.12.02.PDTV.XviD-C4TV", "C4TV")]
+        [TestCase("The.Office.S03E115.DVDRip.XviD-OSiTV", "OSiTV")]
+        public void parse_releaseGroup(string title, string expected)
+        {
+            Parser.ParseReleaseGroup(title).Should().Be(expected);
         }
     }
 }

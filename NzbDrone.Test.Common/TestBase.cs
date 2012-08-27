@@ -45,10 +45,10 @@ namespace NzbDrone.Test.Common
         [SetUp]
         public void TestBaseSetup()
         {
-            EnviromentProvider.RegisterNewInstall = true; 
-
             MockedRestProvider = new Mock<RestProvider>();
             ReportingService.RestProvider = MockedRestProvider.Object;
+            ReportingService.SetupExceptronDriver();
+
 
             if (Directory.Exists(TempFolder))
             {
@@ -75,7 +75,7 @@ namespace NzbDrone.Test.Common
 
         protected void WithTempAsAppPath()
         {
-            Mocker.GetMock<EnviromentProvider>()
+            Mocker.GetMock<EnvironmentProvider>()
                 .SetupGet(c => c.ApplicationPath)
                 .Returns(VirtualPath);
         }

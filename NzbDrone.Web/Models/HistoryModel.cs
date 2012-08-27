@@ -8,6 +8,7 @@ namespace NzbDrone.Web.Models
         public int HistoryId { get; set; }
         public int SeriesId { get; set; }
         public string SeriesTitle { get; set; }
+        public string SeriesTitleSorter { get; set; }
         public string EpisodeNumbering { get; set; }
         public string EpisodeTitle { get; set; }
         public string EpisodeOverview { get; set; }
@@ -19,5 +20,7 @@ namespace NzbDrone.Web.Models
         public string Indexer { get; set; }
         public int EpisodeId { get; set; }
         public string Details { get; set; }
+        public string NzbInfoUrl { get; set; }
+        public string ReleaseGroup { get; set; }
     }
 }

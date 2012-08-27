@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.Linq;
 using System;
 using NLog;
 using Ninject;
 using NzbDrone.Core.Model.Notification;
 using NzbDrone.Core.Providers;
+using NzbDrone.Core.Repository;
 
 namespace NzbDrone.Core.Jobs
 {
@@ -13,17 +15,20 @@ namespace NzbDrone.Core.Jobs
         private readonly DiskScanProvider _diskScanProvider;
         private readonly ExternalNotificationProvider _externalNotificationProvider;
         private readonly SeriesProvider _seriesProvider;
+        private readonly MetadataProvider _metadataProvider;
 
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         [Inject]
         public RenameSeasonJob(MediaFileProvider mediaFileProvider, DiskScanProvider diskScanProvider,
-                                ExternalNotificationProvider externalNotificationProvider, SeriesProvider seriesProvider)
+                                ExternalNotificationProvider externalNotificationProvider, SeriesProvider seriesProvider,
+                                MetadataProvider metadataProvider)
         {
             _mediaFileProvider = mediaFileProvider;
             _diskScanProvider = diskScanProvider;
             _externalNotificationProvider = externalNotificationProvider;
             _seriesProvider = seriesProvider;
+            _metadataProvider = metadataProvider;
         }
 
         public string Name
@@ -44,26 +49,52 @@ namespace NzbDrone.Core.Jobs
             if (secondaryTargetId <= 0)
                 throw new ArgumentOutOfRangeException("secondaryTargetId");
 
-            Logger.Debug("Getting episodes from database for series: {0} and season: {1}", targetId, secondaryTargetId);
+            var series = _seriesProvider.GetSeries(targetId);
+
+            notification.CurrentMessage = String.Format("Renaming episodes for {0} Season {1}", series.Title, secondaryTargetId);
+
+            logger.Debug("Getting episodes from database for series: {0} and season: {1}", targetId, secondaryTargetId);
             var episodeFiles = _mediaFileProvider.GetSeasonFiles(targetId, secondaryTargetId);
 
-            if (episodeFiles == null || episodeFiles.Count == 0)
+            if (episodeFiles == null || !episodeFiles.Any())
             {
-                Logger.Warn("No episodes in database found for series: {0} and season: {1}.", targetId, secondaryTargetId);
+                logger.Warn("No episodes in database found for series: {0} and season: {1}.", targetId, secondaryTargetId);
                 return;
             }
 
+            var newEpisodeFiles = new List<EpisodeFile>();
+            var oldEpisodeFiles = new List<EpisodeFile>();
+
             foreach (var episodeFile in episodeFiles)
             {
-                _diskScanProvider.MoveEpisodeFile(episodeFile);
+                try
+                {
+                    var oldFile = new EpisodeFile(episodeFile);
+                    var newFile = _diskScanProvider.MoveEpisodeFile(episodeFile);
+
+                    if (newFile != null)
+                    {
+                        newEpisodeFiles.Add(newFile);
+                        oldEpisodeFiles.Add(oldFile);
+                    }
+                }
+
+                catch (Exception e)
+                {
+                    logger.WarnException("An error has occurred while renaming file", e);
+                }
             }
 
+            //Remove & Create Metadata for episode files
+            _metadataProvider.RemoveForEpisodeFiles(oldEpisodeFiles);
+            _metadataProvider.CreateForEpisodeFiles(newEpisodeFiles);
+
             //Start AfterRename
-            var series = _seriesProvider.GetSeries(targetId);
+
             var message = String.Format("Renamed: Series {0}, Season: {1}", series.Title, secondaryTargetId);
             _externalNotificationProvider.AfterRename(message, series);
 
-            notification.CurrentMessage = String.Format("Season rename completed for Series: {0} Season: {1}", targetId, secondaryTargetId);
+            notification.CurrentMessage = String.Format("Rename completed for {0} Season {1}", series.Title, secondaryTargetId);
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Exceptron.Client;
+using Exceptron.Client.Configuration;
 using NLog;
 using NzbDrone.Common.Contract;
 
@@ -12,11 +14,12 @@ namespace NzbDrone.Common
 
         private const string SERVICE_URL = "http://services.nzbdrone.com/reporting";
         private const string PARSE_URL = SERVICE_URL + "/ParseError";
-        private const string EXCEPTION_URL = SERVICE_URL + "/ReportException";
 
         public static RestProvider RestProvider { get; set; }
-        private static readonly HashSet<string> parserErrorCache = new HashSet<string>();
+        public static ExceptronClient ExceptronClient { get; set; }
 
+
+        private static readonly HashSet<string> parserErrorCache = new HashSet<string>();
 
         public static void ClearCache()
         {
@@ -30,13 +33,12 @@ namespace NzbDrone.Common
         {
             try
             {
-                if (RestProvider == null && EnviromentProvider.IsProduction)
-                    return;
+                VerifyDependencies();
 
                 lock (parserErrorCache)
                 {
                     if (parserErrorCache.Contains(title.ToLower())) return;
-                    
+
                     parserErrorCache.Add(title.ToLower());
                 }
 
@@ -45,40 +47,104 @@ namespace NzbDrone.Common
             }
             catch (Exception e)
             {
-                if (!EnviromentProvider.IsProduction)
+                if (!EnvironmentProvider.IsProduction)
                 {
                     throw;
                 }
 
                 e.Data.Add("title", title);
-                logger.ErrorException("Unable to report parse error", e);
+                logger.InfoException("Unable to report parse error", e);
             }
         }
 
-        public static void ReportException(LogEventInfo logEvent)
+        public static string ReportException(LogEventInfo logEvent)
         {
             try
             {
-                if (RestProvider == null && EnviromentProvider.IsProduction)
-                    return;
+                VerifyDependencies();
 
-                var report = new ExceptionReport();
-                report.LogMessage = logEvent.FormattedMessage;
-                report.String = logEvent.Exception.ToString();
-                report.Logger = logEvent.LoggerName;
-                report.Type = logEvent.Exception.GetType().Name;
+                var exceptionData = new ExceptionData();
 
-                RestProvider.PostData(EXCEPTION_URL, report);
+                exceptionData.Exception = logEvent.Exception;
+                exceptionData.Component = logEvent.LoggerName;
+                exceptionData.Message = logEvent.FormattedMessage;
+                exceptionData.UserId = EnvironmentProvider.UGuid.ToString().Replace("-", string.Empty);
+
+                if (logEvent.Level <= LogLevel.Info)
+                {
+                    exceptionData.Severity = ExceptionSeverity.None;
+                }
+                else if (logEvent.Level <= LogLevel.Warn)
+                {
+                    exceptionData.Severity = ExceptionSeverity.Warning;
+                }
+                else if (logEvent.Level <= LogLevel.Error)
+                {
+                    exceptionData.Severity = ExceptionSeverity.Error;
+                }
+                else if (logEvent.Level <= LogLevel.Fatal)
+                {
+                    exceptionData.Severity = ExceptionSeverity.Fatal;
+                }
+
+                return ExceptronClient.SubmitException(exceptionData).RefId;
             }
             catch (Exception e)
             {
-                if (!EnviromentProvider.IsProduction)
+                if (!EnvironmentProvider.IsProduction)
                 {
                     throw;
                 }
+                if (logEvent.LoggerName != logger.Name)//prevents a recursive loop.
+                {
+                    logger.WarnException("Unable to report exception. ", e);
+                }
+            }
 
-                //this shouldn't log an exception since it might cause a recursive loop.
-                logger.Error("Unable to report exception. " + e);
+            return null;
+        }
+
+
+        public static void SetupExceptronDriver()
+        {
+            var config = new ExceptronConfiguration
+                             {
+                                     ApiKey = "CB230C312E5C4FF38B4FB9644B05E60G",
+                                     ThrowExceptions = !EnvironmentProvider.IsProduction,
+                             };
+
+            ExceptronClient = new ExceptronClient(config)
+                                  {
+                                      ApplicationVersion = new EnvironmentProvider().Version.ToString()
+                                  };
+        }
+
+        private static void VerifyDependencies()
+        {
+            if (RestProvider == null)
+            {
+                if (EnvironmentProvider.IsProduction)
+                {
+                    logger.Warn("Rest provider wasn't provided. creating new one!");
+                    RestProvider = new RestProvider(new EnvironmentProvider());
+                }
+                else
+                {
+                    throw new InvalidOperationException("REST Provider wasn't configured correctly.");
+                }
+            }
+
+            if (ExceptronClient == null)
+            {
+                if (EnvironmentProvider.IsProduction)
+                {
+                    logger.Warn("Exceptron Driver wasn't provided. creating new one!");
+                    SetupExceptronDriver();
+                }
+                else
+                {
+                    throw new InvalidOperationException("Exceptron Driver wasn't configured correctly.");
+                }
             }
         }
     }

@@ -1,6 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Linq.Dynamic;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
+using DataTables.Mvc.Core.Models;
+using NzbDrone.Core.Helpers;
 using NzbDrone.Core.Jobs;
 using NzbDrone.Core.Providers;
 using NzbDrone.Web.Models;
@@ -23,28 +27,37 @@ namespace NzbDrone.Web.Controllers
             return View();
         }
 
-        public JsonResult AjaxBinding()
+        public ActionResult AjaxBinding(DataTablesPageRequest pageRequest)
         {
-            var history = _historyProvider.AllItemsWithRelationships().Select(h => new HistoryModel
+            var pageResult = _historyProvider.GetPagedItems(pageRequest);
+            var totalItems = _historyProvider.Count();
+
+            var items = pageResult.Items.Select(h => new HistoryModel
             {
                 HistoryId = h.HistoryId,
                 SeriesId = h.SeriesId,
-                EpisodeNumbering = string.Format("{0}x{1:00}", h.Episode.SeasonNumber, h.Episode.EpisodeNumber),
-                EpisodeTitle = h.Episode.Title,
-                EpisodeOverview = h.Episode.Overview,
+                EpisodeNumbering = string.Format("{0}x{1:00}", h.SeasonNumber, h.EpisodeNumber),
+                EpisodeTitle = h.EpisodeTitle,
+                EpisodeOverview = h.EpisodeOverview,
                 SeriesTitle = h.SeriesTitle,
+                SeriesTitleSorter = SortHelper.SkipArticles(h.SeriesTitle),
                 NzbTitle = h.NzbTitle,
                 Quality = h.Quality.ToString(),
                 IsProper = h.IsProper,
                 Date = h.Date.ToString(),
                 DateSorter = h.Date.ToString("MM/dd/yyyy h:mm:ss tt"),
                 Indexer = h.Indexer,
-                EpisodeId = h.EpisodeId
-            }).OrderByDescending(h => h.Date).ToList();
+                EpisodeId = h.EpisodeId,
+                NzbInfoUrl = h.NzbInfoUrl,
+                ReleaseGroup = h.ReleaseGroup
+            });
 
             return Json(new
             {
-                aaData = history
+                sEcho = pageRequest.Echo,
+                iTotalRecords = totalItems,
+                iTotalDisplayRecords = pageResult.TotalItems,
+                aaData = items
             },
             JsonRequestBehavior.AllowGet);
         }
@@ -79,7 +92,7 @@ namespace NzbDrone.Web.Controllers
             //Queue a job to download the replacement episode
             _jobProvider.QueueJob(typeof(EpisodeSearchJob), episodeId);
 
-            return JsonNotificationResult.Info("Episode Redownload Started");
+            return JsonNotificationResult.Queued("Episode search");
         }
     }
 }

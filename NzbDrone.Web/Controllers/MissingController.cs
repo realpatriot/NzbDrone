@@ -5,8 +5,10 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using NzbDrone.Core;
+using NzbDrone.Core.Helpers;
 using NzbDrone.Core.Providers;
 using NzbDrone.Web.Models;
+using ServiceStack.Text;
 
 namespace NzbDrone.Web.Controllers
 {
@@ -31,13 +33,13 @@ namespace NzbDrone.Web.Controllers
                 EpisodeTitle = e.Title,
                 Overview = e.Overview,
                 SeriesTitle = e.Series.Title,
+                SeriesTitleSorter = SortHelper.SkipArticles(e.Series.Title),
                 AirDate = e.AirDate.Value.ToString("MM/dd/yyyy"),
                 AirDateString = e.AirDate.Value.ToBestDateString()
             });
 
-            var serialized = new JavaScriptSerializer().Serialize(missing);
-
-            return View((object)serialized);
+            JsConfig.IncludeNullValues = true;
+            return View(missing);
         }
     }
 }

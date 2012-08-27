@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using FizzWare.NBuilder;
@@ -171,7 +172,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
             //Act
@@ -206,7 +207,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -247,7 +248,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeEpisode);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeTvDbEpisodes);
 
             //Act
@@ -284,7 +285,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -323,7 +324,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -361,7 +362,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -394,7 +395,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -427,7 +428,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
 
 
@@ -438,7 +439,6 @@ namespace NzbDrone.Core.Test.ProviderTests
             var result = Mocker.Resolve<EpisodeProvider>().GetEpisodeBySeries(seriesId).ToList();
             result.Should().HaveSameCount(fakeEpisodes.Episodes);
         }
-
 
         [Test]
         public void RefreshEpisodeInfo_ignore_season_zero()
@@ -463,8 +463,12 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeEpisodes);
+
+            Mocker.GetMock<SeasonProvider>()
+                .Setup(s => s.IsIgnored(seriesId, 0))
+                .Returns(true);
 
             //Act
             Mocker.Resolve<EpisodeProvider>().RefreshEpisodeInfo(fakeSeries);
@@ -489,7 +493,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             var currentEpisodes = new List<Episode>();
 
             Mocker.GetMock<TvDbProvider>(MockBehavior.Strict)
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
 
             Mocker.GetMock<IDatabase>()
@@ -524,7 +528,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             }
 
             Mocker.GetMock<TvDbProvider>(MockBehavior.Strict)
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
 
             Mocker.GetMock<IDatabase>()
@@ -561,7 +565,7 @@ namespace NzbDrone.Core.Test.ProviderTests
                 .Returns(fakeEpisodeList);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(fakeTvDbResult);
 
             //Act
@@ -598,7 +602,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             var fakeSeries = Builder<Series>.CreateNew().With(c => c.SeriesId = seriesId).Build();
 
             Mocker.GetMock<TvDbProvider>(MockBehavior.Strict)
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
 
             Mocker.GetMock<IDatabase>()
@@ -630,7 +634,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             }
 
             Mocker.GetMock<TvDbProvider>(MockBehavior.Strict)
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
 
             var updatedEpisodes = new List<Episode>();
@@ -691,8 +695,12 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeEpisode);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
+
+            Mocker.GetMock<SeasonProvider>()
+                .Setup(s => s.IsIgnored(seriesId, It.IsAny<int>()))
+                .Returns(true);
 
             //Act
             Mocker.Resolve<EpisodeProvider>().RefreshEpisodeInfo(fakeSeries);
@@ -702,180 +710,6 @@ namespace NzbDrone.Core.Test.ProviderTests
             Mocker.GetMock<TvDbProvider>().VerifyAll();
             result.Should().HaveCount(episodeCount);
             result.Where(e => e.Ignored).Should().HaveCount(episodeCount);
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_true_if_all_episodes_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.Ignored = true)
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 2)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 2);
-
-            //Assert
-            result.Should().BeTrue();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_none_of_episodes_are_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.Ignored = false)
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 2)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 2);
-
-            //Assert
-            result.Should().BeFalse();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_some_of_episodes_are_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 2)
-                 .With(c => c.Ignored = true)
-                .Build();
-
-            episodes[2].Ignored = false;
-
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 2);
-
-            //Assert
-            result.Should().BeFalse();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_zero_episodes_in_db_for_season()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 3)
-                 .With(c => c.Ignored = true)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 2);
-
-            //Assert
-            result.Should().BeFalse();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_true_if_zero_episodes_in_db_for_season_and_previous_is_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 3)
-                .With(c => c.Ignored = true)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 4);
-
-            //Assert
-            result.Should().BeTrue();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_zero_episodes_in_db_for_season_and_previous_is_not_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 3)
-                .With(c => c.Ignored = false)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 4);
-
-            //Assert
-            result.Should().BeFalse();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_zero_episodes_in_db_for_season_one()
-        {
-            WithRealDb();
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 1);
-
-            //Assert
-            result.Should().BeFalse();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_true_if_zero_episodes_in_db_for_season_zero()
-        {
-            WithRealDb();
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 0);
-
-            //Assert
-            result.Should().BeTrue();
-        }
-
-        [Test]
-        public void IsSeasonIgnored_should_return_false_if_season_zero_is_not_ignored()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 0)
-                .With(c => c.Ignored = false)
-                .Build();
-
-            episodes.ToList().ForEach(c => Db.Insert(c));
-
-            //Act
-            var result = Mocker.Resolve<EpisodeProvider>().IsIgnored(10, 0);
-
-            //Assert
-            result.Should().BeFalse();
         }
 
         [Test]
@@ -895,7 +729,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             //act
             var seriesProvider = Mocker.Resolve<SeriesProvider>();
 
-            seriesProvider.AddSeries("c:\\test\\", tvDbSeriesId, 1);
+            seriesProvider.AddSeries("Test Series","c:\\test\\", tvDbSeriesId, 1);
 
             var episodeProvider = Mocker.Resolve<EpisodeProvider>();
             episodeProvider.RefreshEpisodeInfo(seriesProvider.GetSeries(tvDbSeriesId));
@@ -1049,6 +883,10 @@ namespace NzbDrone.Core.Test.ProviderTests
                 .With(e => e.Ignored = false)
                 .Build();
 
+            Mocker.GetMock<SeasonProvider>()
+                .Setup(s => s.IsIgnored(newEpisode.SeriesId, newEpisode.SeasonNumber))
+                .Returns(true);
+
             //Act
             Mocker.Resolve<EpisodeProvider>().AddEpisode(newEpisode);
 
@@ -1179,86 +1017,6 @@ namespace NzbDrone.Core.Test.ProviderTests
 
             episodesInDb.Should().HaveCount(4);
             episodesInDb.Where(e => !e.Ignored).Should().HaveCount(1);
-
-            Mocker.VerifyAllMocks();
-        }
-
-        [Test]
-        public void IgnoreSeason_Ignore()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 1)
-                .With(c => c.Ignored = false)
-                .Build().ToList();
-
-            episodes.ForEach(c => Db.Insert(c));
-
-            //Act
-            Mocker.Resolve<EpisodeProvider>().SetSeasonIgnore(10, 1, true);
-
-            //Assert
-            var episodesInDb = Db.Fetch<Episode>(@"SELECT * FROM Episodes");
-
-            episodesInDb.Should().HaveCount(4);
-            episodesInDb.Where(e => e.Ignored).Should().HaveCount(4);
-
-            Mocker.VerifyAllMocks();
-        }
-
-        [Test]
-        public void IgnoreSeason_RemoveIgnore()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 1)
-                .With(c => c.Ignored = true)
-                .Build().ToList();
-
-            episodes.ForEach(c => Db.Insert(c));
-
-            //Act
-            Mocker.Resolve<EpisodeProvider>().SetSeasonIgnore(10, 1, false);
-
-            //Assert
-            var episodesInDb = Db.Fetch<Episode>(@"SELECT * FROM Episodes");
-
-            episodesInDb.Should().HaveCount(4);
-            episodesInDb.Where(e => !e.Ignored).Should().HaveCount(4);
-
-            Mocker.VerifyAllMocks();
-        }
-
-        [Test]
-        public void IgnoreSeason_Ignore_Half()
-        {
-            WithRealDb();
-
-            var episodes = Builder<Episode>.CreateListOfSize(4)
-                .All()
-                .With(c => c.SeriesId = 10)
-                .With(c => c.SeasonNumber = 1)
-                .With(c => c.Ignored = true)
-                .TheFirst(2)
-                .With(c => c.Ignored = false)
-                .Build().ToList();
-
-            episodes.ForEach(c => Db.Insert(c));
-
-            //Act
-            Mocker.Resolve<EpisodeProvider>().SetSeasonIgnore(10, 1, true);
-
-            //Assert
-            var episodesInDb = Db.Fetch<Episode>(@"SELECT * FROM Episodes");
-
-            episodesInDb.Should().HaveCount(4);
-            episodesInDb.Where(e => e.Ignored).Should().HaveCount(4);
 
             Mocker.VerifyAllMocks();
         }
@@ -1649,7 +1407,7 @@ namespace NzbDrone.Core.Test.ProviderTests
             Db.Insert(fakeSeries);
 
             Mocker.GetMock<TvDbProvider>()
-                .Setup(c => c.GetSeries(seriesId, true))
+                .Setup(c => c.GetSeries(seriesId, true, false))
                 .Returns(tvdbSeries);
 
             //Act

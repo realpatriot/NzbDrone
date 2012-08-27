@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NLog;
 using Ninject;
@@ -16,14 +17,16 @@ namespace NzbDrone.Core.Providers
         private readonly DiskProvider _diskProvider;
         private readonly DiskScanProvider _diskScanProvider;
         private readonly SeriesProvider _seriesProvider;
+        private readonly MetadataProvider _metadataProvider;
 
         [Inject]
         public PostDownloadProvider(DiskProvider diskProvider, DiskScanProvider diskScanProvider,
-                                    SeriesProvider seriesProvider)
+                                    SeriesProvider seriesProvider, MetadataProvider metadataProvider)
         {
             _diskProvider = diskProvider;
             _diskScanProvider = diskScanProvider;
             _seriesProvider = seriesProvider;
+            _metadataProvider = metadataProvider;
         }
 
         public PostDownloadProvider()
@@ -66,8 +69,23 @@ namespace NzbDrone.Core.Providers
                 return;
             }
 
+            var size = _diskProvider.GetDirectorySize(subfolderInfo.FullName);
+            var freeSpace = _diskProvider.FreeDiskSpace(new DirectoryInfo(series.Path));
+
+            if (Convert.ToUInt64(size) > freeSpace)
+            {
+                Logger.Error("Not enough free disk space for series: {0}, {1}", series.Title, series.Path);
+                return;
+            }
+
+            _diskScanProvider.CleanUpDropFolder(subfolderInfo.FullName);
+
             var importedFiles = _diskScanProvider.Scan(series, subfolderInfo.FullName);
             importedFiles.ForEach(file => _diskScanProvider.MoveEpisodeFile(file, true));
+
+            //Create Metadata for all the episode files found
+            if (importedFiles.Any())
+                _metadataProvider.CreateForEpisodeFiles(importedFiles);
 
             //Delete the folder only if folder is small enough
             if (_diskProvider.GetDirectorySize(subfolderInfo.FullName) < Constants.IgnoreFileSize)

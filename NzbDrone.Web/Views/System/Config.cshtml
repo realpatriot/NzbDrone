@@ -41,7 +41,7 @@
         }
 
         $(document).ready(function() {
-            $('#historyGrid').removeClass('hidden-grid');
+            $('#configGrid').removeClass('hidden-grid');
 
             oTable = $('.dataTablesGrid').dataTable({
                 "bShowAll": true,
@@ -88,7 +88,6 @@
         });
         
         function fnRowCallback(nRow, aData) {
-            //e.row.style.boarder = "";
             var id = aData["Key"];
             $(nRow).attr("id",id);
         }

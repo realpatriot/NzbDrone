@@ -2,66 +2,99 @@
 //https://connect.microsoft.com/VisualStudio/feedback/details/325421/syndicationfeed-load-fails-to-parse-datetime-against-a-real-world-feeds-ie7-can-read
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.ServiceModel.Syndication;
+using System.Threading;
 using System.Xml;
+using NLog;
 
 namespace NzbDrone.Core.Providers.Indexer
 {
-
     public class SyndicationFeedXmlReader : XmlTextReader
     {
-        readonly string[] Rss20DateTimeHints = { "pubDate" };
-        readonly string[] Atom10DateTimeHints = { "updated", "published", "lastBuildDate" };
-        private bool isRss2DateTime = false;
-        private bool isAtomDateTime = false;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        private static readonly string[] rss20DateTimeHints = { "pubDate" };
+        private static readonly string[] atom10DateTimeHints = { "updated", "published", "lastBuildDate" };
+        private bool _isRss2DateTime;
+        private bool _isAtomDateTime;
+
+        private static readonly MethodInfo rss20FeedFormatterMethodInfo = typeof(Rss20FeedFormatter).GetMethod("DateFromString", BindingFlags.NonPublic | BindingFlags.Static);
+        private static readonly MethodInfo atom10FeedFormatterMethodInfo = typeof(Atom10FeedFormatter).GetMethod("DateFromString", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public SyndicationFeedXmlReader(Stream stream) : base(stream) { }
 
         public override bool IsStartElement(string localname, string ns)
         {
-            isRss2DateTime = false;
-            isAtomDateTime = false;
+            _isRss2DateTime = rss20DateTimeHints.Contains(localname);
+            _isAtomDateTime = atom10DateTimeHints.Contains(localname);
 
-            if (Rss20DateTimeHints.Contains(localname)) isRss2DateTime = true;
-            if (Atom10DateTimeHints.Contains(localname)) isAtomDateTime = true;
+            CheckForError();       
 
             return base.IsStartElement(localname, ns);
         }
 
         public override string ReadString()
         {
-            string dateVal = base.ReadString();
+            var dateVal = base.ReadString();
 
             try
             {
-                if (isRss2DateTime)
+                if (_isRss2DateTime)
                 {
-                    MethodInfo objMethod = typeof(Rss20FeedFormatter).GetMethod("DateFromString", BindingFlags.NonPublic | BindingFlags.Static);
-                    Debug.Assert(objMethod != null);
-                    objMethod.Invoke(null, new object[] { dateVal, this });
-
+                    rss20FeedFormatterMethodInfo.Invoke(null, new object[] { dateVal, this });
                 }
-                if (isAtomDateTime)
+                if (_isAtomDateTime)
                 {
-                    MethodInfo objMethod = typeof(Atom10FeedFormatter).GetMethod("DateFromString", BindingFlags.NonPublic | BindingFlags.Instance);
-                    Debug.Assert(objMethod != null);
-                    objMethod.Invoke(new Atom10FeedFormatter(), new object[] { dateVal, this });
+                    atom10FeedFormatterMethodInfo.Invoke(new Atom10FeedFormatter(), new object[] { dateVal, this });
                 }
             }
-            catch (TargetInvocationException)
+            catch (TargetInvocationException e)
             {
-                DateTimeFormatInfo dtfi = CultureInfo.CurrentCulture.DateTimeFormat;
-                return DateTimeOffset.UtcNow.ToString(dtfi.RFC1123Pattern);
+                DateTime parsedDate;
+
+                if (!DateTime.TryParse(dateVal, new CultureInfo("en-US"), DateTimeStyles.None, out parsedDate))
+                {
+                    parsedDate = DateTime.UtcNow;
+                    logger.WarnException("Unable to parse Feed date " + dateVal, e);
+                }
+
+                var currentCulture = Thread.CurrentThread.CurrentCulture;
+                Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+                dateVal = parsedDate.ToString("ddd, dd MMM yyyy HH:mm:ss zzz");
+                dateVal = dateVal.Remove(dateVal.LastIndexOf(':'), 1);
+                Thread.CurrentThread.CurrentCulture = currentCulture;
             }
 
             return dateVal;
-
         }
 
+        internal void CheckForError()
+        {
+            if (this.MoveToContent() == XmlNodeType.Element)
+            {
+               if (this.Name != "error")
+                    return;
+
+                var message = "Error: ";
+
+                if (this.HasAttributes)
+                {
+                    while (this.MoveToNextAttribute())
+                    {
+                        message += String.Format(" [{0}:{1}]", this.Name, this.Value);
+                    }
+                }
+
+                logger.Error("Error in RSS feed: {0}", message);
+                throw new Exception(message);
+            }
+            
+        }
     }
 }

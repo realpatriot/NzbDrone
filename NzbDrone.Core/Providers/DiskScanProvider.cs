@@ -6,6 +6,7 @@ using Ninject;
 using NLog;
 using NzbDrone.Common;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Providers.Core;
 using NzbDrone.Core.Repository;
 
 namespace NzbDrone.Core.Providers
@@ -13,18 +14,21 @@ namespace NzbDrone.Core.Providers
     public class DiskScanProvider
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private static readonly string[] mediaExtentions = new[] { ".mkv", ".avi", ".wmv", ".mp4", ".mpg", ".mpeg", ".xvid", ".flv", ".mov", ".rm", ".rmvb", ".divx", ".dvr-ms", ".ts", ".ogm" };
+        private static readonly string[] mediaExtentions = new[] { ".mkv", ".avi", ".wmv", ".mp4", ".mpg", ".mpeg", ".xvid", ".flv", ".mov", ".rm", ".rmvb", ".divx", ".dvr-ms", ".ts", ".ogm", ".m4v", ".strm" };
         private readonly DiskProvider _diskProvider;
         private readonly EpisodeProvider _episodeProvider;
         private readonly MediaFileProvider _mediaFileProvider;
         private readonly SeriesProvider _seriesProvider;
         private readonly ExternalNotificationProvider _externalNotificationProvider;
         private readonly DownloadProvider _downloadProvider;
+        private readonly SignalRProvider _signalRProvider;
+        private readonly ConfigProvider _configProvider;
 
         [Inject]
         public DiskScanProvider(DiskProvider diskProvider, EpisodeProvider episodeProvider,
                                 SeriesProvider seriesProvider, MediaFileProvider mediaFileProvider,
-                                ExternalNotificationProvider externalNotificationProvider, DownloadProvider downloadProvider)
+                                ExternalNotificationProvider externalNotificationProvider, DownloadProvider downloadProvider,
+                                SignalRProvider signalRProvider, ConfigProvider configProvider)
         {
             _diskProvider = diskProvider;
             _episodeProvider = episodeProvider;
@@ -32,6 +36,8 @@ namespace NzbDrone.Core.Providers
             _mediaFileProvider = mediaFileProvider;
             _externalNotificationProvider = externalNotificationProvider;
             _downloadProvider = downloadProvider;
+            _signalRProvider = signalRProvider;
+            _configProvider = configProvider;
         }
 
         public DiskScanProvider()
@@ -147,6 +153,8 @@ namespace NzbDrone.Core.Providers
             episodeFile.Quality = parseResult.Quality.QualityType;
             episodeFile.Proper = parseResult.Quality.Proper;
             episodeFile.SeasonNumber = parseResult.SeasonNumber;
+            episodeFile.SceneName = Path.GetFileNameWithoutExtension(filePath.NormalizePath());
+            episodeFile.ReleaseGroup = parseResult.ReleaseGroup;
             var fileId = _mediaFileProvider.Add(episodeFile);
 
             //Link file to all episodes
@@ -162,28 +170,28 @@ namespace NzbDrone.Core.Providers
             return episodeFile;
         }
 
-        public virtual bool MoveEpisodeFile(EpisodeFile episodeFile, bool newDownload = false)
+        public virtual EpisodeFile MoveEpisodeFile(EpisodeFile episodeFile, bool newDownload = false)
         {
             if (episodeFile == null)
                 throw new ArgumentNullException("episodeFile");
 
             var series = _seriesProvider.GetSeries(episodeFile.SeriesId);
             var episodes = _episodeProvider.GetEpisodesByFileId(episodeFile.EpisodeFileId);
-            string newFileName = _mediaFileProvider.GetNewFilename(episodes, series.Title, episodeFile.Quality, episodeFile.Proper);
+            string newFileName = _mediaFileProvider.GetNewFilename(episodes, series.Title, episodeFile.Quality, episodeFile.Proper, episodeFile);
             var newFile = _mediaFileProvider.CalculateFilePath(series, episodes.First().SeasonNumber, newFileName, Path.GetExtension(episodeFile.Path));
 
             //Only rename if existing and new filenames don't match
             if (DiskProvider.PathEquals(episodeFile.Path, newFile.FullName))
             {
                 Logger.Debug("Skipping file rename, source and destination are the same: {0}", episodeFile.Path);
-                return false;
+                return null;
             }
 
             _diskProvider.CreateDirectory(newFile.DirectoryName);
 
             Logger.Debug("Moving [{0}] > [{1}]", episodeFile.Path, newFile.FullName);
             _diskProvider.MoveFile(episodeFile.Path, newFile.FullName);
-
+            
             _diskProvider.InheritFolderPermissions(newFile.FullName);
 
             episodeFile.Path = newFile.FullName;
@@ -191,19 +199,23 @@ namespace NzbDrone.Core.Providers
 
             var parseResult = Parser.ParsePath(episodeFile.Path);
             parseResult.Series = series;
+            parseResult.Quality = new Quality{ QualityType = episodeFile.Quality, Proper = episodeFile.Proper };
 
             var message = _downloadProvider.GetDownloadTitle(parseResult);
 
             if (newDownload)
             {
                 _externalNotificationProvider.OnDownload(message, series);
+                
+                foreach(var episode in episodes)
+                    _signalRProvider.UpdateEpisodeStatus(episode.EpisodeId, EpisodeStatusType.Ready, parseResult.Quality);
             }
             else
             {
                 _externalNotificationProvider.OnRename(message, series);
             }
 
-            return true;
+            return episodeFile;
         }
 
         /// <summary>
@@ -225,7 +237,7 @@ namespace NzbDrone.Core.Providers
                         {
                             Logger.Trace("Setting EpisodeFileId for Episode: [{0}] to 0", episode.EpisodeId);
                             episode.EpisodeFileId = 0;
-                            episode.Ignored = true;
+                            episode.Ignored = _configProvider.AutoIgnorePreviouslyDownloadedEpisodes;
                             episode.GrabDate = null;
                             episode.PostDownloadStatus = PostDownloadStatusType.Unknown;
                             _episodeProvider.UpdateEpisode(episode);
@@ -244,6 +256,33 @@ namespace NzbDrone.Core.Providers
             }
         }
 
+        public virtual void CleanUpDropFolder(string path)
+        {
+            //Todo: We should rename files before importing them to prevent this issue from ever happening
+
+            var filesOnDisk = GetVideoFiles(path);
+
+            foreach(var file in filesOnDisk)
+            {
+                try
+                {
+                    var episodeFile = _mediaFileProvider.GetFileByPath(file);
+
+                    if (episodeFile != null)
+                    {
+                        Logger.Trace("[{0}] was imported but not moved, moving it now", file);
+
+                        MoveEpisodeFile(episodeFile, true);
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Logger.WarnException("Failed to move epiosde file from drop folder: " + file, ex);
+                    throw;
+                }
+            }
+        }
 
         private List<string> GetVideoFiles(string path)
         {

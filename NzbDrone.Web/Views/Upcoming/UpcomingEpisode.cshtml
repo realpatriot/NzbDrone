@@ -7,7 +7,7 @@
     Layout = null;
 }
 
-<tr class='@Model.EpisodeId data-row@(ViewData["AltRow"] == null || !(bool)ViewData["AltRow"] ? "" : " alt-row")'>
+<tr class='episodeId_@(Model.EpisodeId) data-row@(ViewData["AltRow"] == null || !(bool)ViewData["AltRow"] ? "" : " alt-row")'>
     <td>@Html.ActionLink(Model.SeriesTitle, "Details", "Series", new { seriesId = Model.SeriesId }, null)</td>
     <td>@Model.EpisodeNumbering</td>
     <td>@Model.Title</td>
@@ -33,10 +33,24 @@
         }
     }
 
+    @{
+        var statusTitle = Model.Status;
+
+        if (Model.Status == "AirsToday")
+        {
+            statusTitle = "Airs today";
+        }
+        
+        if (Model.Status == "NotAired")
+        {
+            statusTitle = "Not yet aired";
+        }
+    }
+
     @*Commands Column*@
     <td class="@cellColourClass">
-        <img src='../../Content/Images/@(Model.Status).png' alt='@Model.Status' title='@Model.Status' class='gridImage' />
-        @Ajax.ImageActionLink("../../Content/Images/Search.png", new { Alt = "Search", Title = "Search for episode", @class = "gridImage" }, "Search", "Episode", new { episodeId = Model.EpisodeId }, null, null)
+        <img src='../../Content/Images/@(Model.Status).png' alt='@Model.Status' title='@statusTitle' class='gridImage statusImage' />
+        @Ajax.ImageActionLink("../../Content/Images/Search.png", new { Alt = "Search", Title = "Search for episode", @class = "gridAction" }, "Search", "Episode", new { episodeId = Model.EpisodeId }, null, null)
     </td>
 </tr>
 

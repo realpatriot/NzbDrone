@@ -20,13 +20,16 @@ namespace NzbDrone.Core.Providers
         private static readonly Regex multiPartCleanupRegex = new Regex(@"\(\d+\)$", RegexOptions.Compiled);
 
         private readonly TvDbProvider _tvDbProvider;
+        private readonly SeasonProvider _seasonProvider;
         private readonly IDatabase _database;
         private readonly SeriesProvider _seriesProvider;
 
         [Inject]
-        public EpisodeProvider(IDatabase database, SeriesProvider seriesProvider, TvDbProvider tvDbProviderProvider)
+        public EpisodeProvider(IDatabase database, SeriesProvider seriesProvider,
+            TvDbProvider tvDbProviderProvider, SeasonProvider seasonProvider)
         {
             _tvDbProvider = tvDbProviderProvider;
+            _seasonProvider = seasonProvider;
             _database = database;
             _seriesProvider = seriesProvider;
         }
@@ -38,8 +41,7 @@ namespace NzbDrone.Core.Providers
         public virtual void AddEpisode(Episode episode)
         {
             //If Season is ignored ignore this episode
-            if (IsIgnored(episode.SeriesId, episode.SeasonNumber))
-                episode.Ignored = true;
+            episode.Ignored = _seasonProvider.IsIgnored(episode.SeriesId, episode.SeasonNumber);
 
             _database.Insert(episode);
         }
@@ -231,7 +233,7 @@ namespace NzbDrone.Core.Providers
                 }
                 else
                 {
-                    logger.Debug("Unable to find {0}-S{1:00}E{2:00}", parseResult.Series.Title, parseResult.SeasonNumber, episodeNumber);
+                    logger.Debug("Unable to find {0}", parseResult);
                 }
             }
 
@@ -269,25 +271,27 @@ namespace NzbDrone.Core.Providers
 
         public virtual void RefreshEpisodeInfo(Series series)
         {
-            logger.Info("Starting episode info refresh for series: {0}", series.Title.WithDefault(series.SeriesId));
-            int successCount = 0;
-            int failCount = 0;
-            var tvDbSeriesInfo = _tvDbProvider.GetSeries(series.SeriesId, true);
+            logger.Trace("Starting episode info refresh for series: {0}", series.Title.WithDefault(series.SeriesId));
+            var successCount = 0;
+            var failCount = 0;
+
+            var tvdbEpisodes = _tvDbProvider.GetSeries(series.SeriesId, true)
+                                        .Episodes
+                                        .Where(episode => !string.IsNullOrWhiteSpace(episode.EpisodeName) ||
+                                              (episode.FirstAired < DateTime.Now.AddDays(2) && episode.FirstAired.Year > 1900))
+                                                .ToList();
 
             var seriesEpisodes = GetEpisodeBySeries(series.SeriesId);
             var updateList = new List<Episode>();
             var newList = new List<Episode>();
 
-            foreach (var episode in tvDbSeriesInfo.Episodes)
+            _seasonProvider.EnsureSeasons(series.SeriesId, tvdbEpisodes.Select(c => c.SeasonNumber).Distinct());
+            
+            foreach (var episode in tvdbEpisodes.OrderBy(e => e.SeasonNumber).ThenBy(e => e.EpisodeNumber))
             {
                 try
                 {
-                    //skip episodes that are too far in the future and have no title.
-                    if ((episode.FirstAired > DateTime.Now.AddDays(2) || episode.FirstAired.Year < 1900) &&
-                        string.IsNullOrWhiteSpace(episode.EpisodeName))
-                        continue;
-
-                    logger.Trace("Updating info for [{0}] - S{1}E{2}", tvDbSeriesInfo.SeriesName, episode.SeasonNumber, episode.EpisodeNumber);
+                    logger.Trace("Updating info for [{0}] - S{1:00}E{2:00}", series.Title, episode.SeasonNumber, episode.EpisodeNumber);
 
                     //first check using tvdbId, this should cover cases when and episode number in a season is changed
                     var episodeToUpdate = seriesEpisodes.SingleOrDefault(e => e.TvDbEpisodeId == episode.Id);
@@ -298,21 +302,19 @@ namespace NzbDrone.Core.Providers
                         episodeToUpdate = seriesEpisodes.SingleOrDefault(e => e.SeasonNumber == episode.SeasonNumber && e.EpisodeNumber == episode.EpisodeNumber);
                     }
 
-                    //Episode doesn't exist locally
                     if (episodeToUpdate == null)
                     {
                         episodeToUpdate = new Episode();
                         newList.Add(episodeToUpdate);
 
-                        //If it is Episode Zero Ignore it, since it is new
-                        if (episode.EpisodeNumber == 0 && episode.SeasonNumber > 1)
+                        //If it is Episode Zero Ignore it (specials, sneak peeks.)
+                        if (episode.EpisodeNumber == 0 && episode.SeasonNumber != 1)
                         {
                             episodeToUpdate.Ignored = true;
                         }
-                        //Else we need to check if this episode should be ignored based on IsIgnored rules
                         else
                         {
-                            episodeToUpdate.Ignored = IsIgnored(series.SeriesId, episode.SeasonNumber);
+                            episodeToUpdate.Ignored = _seasonProvider.IsIgnored(series.SeriesId, episode.SeasonNumber);
                         }
                     }
                     else
@@ -325,7 +327,8 @@ namespace NzbDrone.Core.Providers
                     episodeToUpdate.EpisodeNumber = episode.EpisodeNumber;
                     episodeToUpdate.SeasonNumber = episode.SeasonNumber;
                     episodeToUpdate.Title = episode.EpisodeName;
-                    episodeToUpdate.Overview = episode.Overview;
+
+                    episodeToUpdate.Overview = episode.Overview.Truncate(3500);
 
                     if (episode.FirstAired.Year > 1900)
                         episodeToUpdate.AirDate = episode.FirstAired.Date;
@@ -336,8 +339,7 @@ namespace NzbDrone.Core.Providers
                 }
                 catch (Exception e)
                 {
-                    logger.FatalException(
-                        String.Format("An error has occurred while updating episode info for series {0}", tvDbSeriesInfo.SeriesName), e);
+                    logger.FatalException(String.Format("An error has occurred while updating episode info for series {0}", series.Title), e);
                     failCount++;
                 }
             }
@@ -345,45 +347,22 @@ namespace NzbDrone.Core.Providers
             _database.InsertMany(newList);
             _database.UpdateMany(updateList);
 
-            logger.Info("Finished episode refresh for series: {0}. Successful: {1} - Failed: {2} ",
-                         tvDbSeriesInfo.SeriesName, successCount, failCount);
+            if (failCount != 0)
+            {
+                logger.Info("Finished episode refresh for series: {0}. Successful: {1} - Failed: {2} ",
+                            series.Title, successCount, failCount);
+            }
+            else
+            {
+                logger.Info("Finished episode refresh for series: {0}.", series.Title);
+            }
 
-            //DeleteEpisodesNotInTvdb
-            DeleteEpisodesNotInTvdb(series, tvDbSeriesInfo);
+            DeleteEpisodesNotInTvdb(series, tvdbEpisodes);
         }
 
         public virtual void UpdateEpisode(Episode episode)
         {
             _database.Update(episode);
-        }
-
-        public virtual bool IsIgnored(int seriesId, int seasonNumber)
-        {
-            var episodes = _database.Fetch<Episode>(@"SELECT * FROM Episodes WHERE SeriesId=@0 AND SeasonNumber=@1", seriesId, seasonNumber);
-
-            if (episodes == null || episodes.Count == 0)
-            {
-                if (seasonNumber == 0)
-                    return true;
-
-                //Don't check for a previous season if season is 1
-                if (seasonNumber == 1)
-                    return false;
-
-                //else
-                var lastSeasonsEpisodes = _database.Fetch<Episode>(@"SELECT * FROM Episodes 
-                                                                     WHERE SeriesId=@0 AND SeasonNumber=@1", seriesId, seasonNumber - 1);
-
-                if (lastSeasonsEpisodes != null && lastSeasonsEpisodes.Any() && lastSeasonsEpisodes.Count == lastSeasonsEpisodes.Count(e => e.Ignored))
-                    return true;
-
-                return false;
-            }
-
-            if (episodes.Count == episodes.Count(e => e.Ignored))
-                return true;
-
-            return false;
         }
 
         public virtual IList<int> GetSeasons(int seriesId)
@@ -394,17 +373,6 @@ namespace NzbDrone.Core.Providers
         public virtual IList<int> GetEpisodeNumbersBySeason(int seriesId, int seasonNumber)
         {
             return _database.Fetch<int>("SELECT EpisodeNumber FROM Episodes WHERE SeriesId=@0 AND SeasonNumber=@1", seriesId, seasonNumber).OrderBy(c => c).ToList();
-        }
-
-        public virtual void SetSeasonIgnore(long seriesId, int seasonNumber, bool isIgnored)
-        {
-            logger.Info("Setting ignore flag on Series:{0} Season:{1} to {2}", seriesId, seasonNumber, isIgnored);
-
-            _database.Execute(@"UPDATE Episodes SET Ignored = @0
-                                WHERE SeriesId = @1 AND SeasonNumber = @2 AND Ignored = @3",
-                isIgnored, seriesId, seasonNumber, !isIgnored);
-
-            logger.Info("Ignore flag for Series:{0} Season:{1} successfully set to {2}", seriesId, seasonNumber, isIgnored);
         }
 
         public virtual void SetEpisodeIgnore(int episodeId, bool isIgnored)
@@ -431,12 +399,14 @@ namespace NzbDrone.Core.Providers
             return false;
         }
 
-        public virtual void DeleteEpisodesNotInTvdb(Series series, TvdbSeries tvDbSeriesInfo)
+        public virtual void DeleteEpisodesNotInTvdb(Series series, IList<TvdbEpisode> tvdbEpisodes)
         {
             logger.Trace("Starting deletion of episodes that no longer exist in TVDB: {0}", series.Title.WithDefault(series.SeriesId));
 
+            if (!tvdbEpisodes.Any()) return;
+
             //Delete Episodes not matching TvDbIds for this series
-            var tvDbIds = tvDbSeriesInfo.Episodes.Select(e => e.Id);
+            var tvDbIds = tvdbEpisodes.Select(e => e.Id);
             var tvDbIdString = String.Join(", ", tvDbIds);
 
             var tvDbIdQuery = String.Format("DELETE FROM Episodes WHERE SeriesId = {0} AND TvDbEpisodeId > 0 AND TvDbEpisodeId NOT IN ({1})",

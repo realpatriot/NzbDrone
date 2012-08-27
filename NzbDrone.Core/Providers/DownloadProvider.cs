@@ -17,13 +17,15 @@ namespace NzbDrone.Core.Providers
         private readonly ExternalNotificationProvider _externalNotificationProvider;
         private readonly ConfigProvider _configProvider;
         private readonly BlackholeProvider _blackholeProvider;
+        private readonly SignalRProvider _signalRProvider;
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         [Inject]
         public DownloadProvider(SabProvider sabProvider, HistoryProvider historyProvider,
             EpisodeProvider episodeProvider, ExternalNotificationProvider externalNotificationProvider,
-            ConfigProvider configProvider, BlackholeProvider blackholeProvider)
+            ConfigProvider configProvider, BlackholeProvider blackholeProvider,
+            SignalRProvider signalRProvider)
         {
             _sabProvider = sabProvider;
             _historyProvider = historyProvider;
@@ -31,6 +33,7 @@ namespace NzbDrone.Core.Providers
             _externalNotificationProvider = externalNotificationProvider;
             _configProvider = configProvider;
             _blackholeProvider = blackholeProvider;
+            _signalRProvider = signalRProvider;
         }
 
         public DownloadProvider()
@@ -49,7 +52,6 @@ namespace NzbDrone.Core.Providers
             {
                 logger.Trace("Download added to Queue: {0}", downloadTitle);
 
-
                 foreach (var episode in _episodeProvider.GetEpisodesByParseResult(parseResult))
                 {
                     var history = new History();
@@ -60,9 +62,13 @@ namespace NzbDrone.Core.Providers
                     history.NzbTitle = parseResult.OriginalString;
                     history.EpisodeId = episode.EpisodeId;
                     history.SeriesId = episode.SeriesId;
+                    history.NzbInfoUrl = parseResult.NzbInfoUrl;
+                    history.ReleaseGroup = parseResult.ReleaseGroup;
 
                     _historyProvider.Add(history);
                     _episodeProvider.MarkEpisodeAsFetched(episode.EpisodeId);
+
+                    _signalRProvider.UpdateEpisodeStatus(episode.EpisodeId, EpisodeStatusType.Downloading, null);
                 }
 
                 _externalNotificationProvider.OnGrab(downloadTitle);

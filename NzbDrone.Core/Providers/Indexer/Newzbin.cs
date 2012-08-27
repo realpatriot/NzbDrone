@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Ninject;
 using NzbDrone.Common;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Providers.Core;
+using NzbDrone.Core.Repository.Quality;
 
 namespace NzbDrone.Core.Providers.Indexer
 {
@@ -21,7 +24,7 @@ namespace NzbDrone.Core.Providers.Indexer
         {
         }
 
-        private const string URL_PARAMS = "feed=rss&hauth=1&ps_rb_language=4096";
+        private const string URL_PARAMS = "feed=rss&hauth=1&ps_rb_language=4096&ps_rb_video_format=3082257";
 
         protected override string[] Urls
         {
@@ -42,7 +45,6 @@ namespace NzbDrone.Core.Providers.Indexer
                        !string.IsNullOrWhiteSpace(_configProvider.NewzbinPassword);
             }
         }
-
 
         protected override NetworkCredential Credentials
         {
@@ -89,7 +91,6 @@ namespace NzbDrone.Core.Providers.Indexer
                            };
         }
 
-
         public override string Name
         {
             get { return "Newzbin"; }
@@ -100,24 +101,42 @@ namespace NzbDrone.Core.Providers.Indexer
             return item.Id + "nzb";
         }
 
+        protected override string NzbInfoUrl(SyndicationItem item)
+        {
+            return item.Links[0].Uri.ToString();
+        }
+
         protected override EpisodeParseResult CustomParser(SyndicationItem item, EpisodeParseResult currentResult)
         {
             if (currentResult != null)
             {
                 var quality = Parser.ParseQuality(item.Summary.Text);
-
                 currentResult.Quality = quality;
 
                 var languageString = Regex.Match(item.Summary.Text, @"Language - \w*", RegexOptions.IgnoreCase).Value;
-
                 currentResult.Language = Parser.ParseLanguage(languageString);
 
                 var sizeString = Regex.Match(item.Summary.Text, @"\(Size: \d*\,?\d+\.\d{1,2}\w{2}\)", RegexOptions.IgnoreCase).Value;
-
                 currentResult.Size = Parser.GetReportSize(sizeString);
+
+                try
+                {
+                    var releaseGroupText = item.ElementExtensions.Single(s => s.OuterName == "nfo")
+                                        .GetObject<XElement>()
+                                        .Element(XName.Get("filename", "http://www.newzbin2.es/DTD/2007/feeds/report/"))
+                                        .Value;
+
+                    var releaseGroup = Parser.ParseReleaseGroup(releaseGroupText.Replace(".nfo", ""));
+                    currentResult.ReleaseGroup = releaseGroup;
+                }
+                catch(Exception ex)
+                {
+                    _logger.TraceException("Error getting release group for newzbin release", ex);
+                    currentResult.ReleaseGroup = "";
+                }           
             }
+
             return currentResult;
         }
-
     }
 }

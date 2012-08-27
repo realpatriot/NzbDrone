@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Providers.Indexer
         protected readonly ConfigProvider _configProvider;
 
         private static readonly Regex TitleSearchRegex = new Regex(@"[\W]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        protected static readonly Regex RemoveThe = new Regex(@"^the\s", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         [Inject]
         protected IndexerBase(HttpProvider httpProvider, ConfigProvider configProvider)
@@ -44,9 +45,15 @@ namespace NzbDrone.Core.Providers.Indexer
         /// </summary>
         protected abstract string[] Urls { get; }
 
-
         public abstract bool IsConfigured { get; }
 
+        /// <summary>
+        ///   Should the indexer be enabled by default?
+        /// </summary>
+        public virtual bool EnabledByDefault
+        {
+            get { return false; }
+        }
 
         /// <summary>
         /// Gets the credential.
@@ -55,7 +62,6 @@ namespace NzbDrone.Core.Providers.Indexer
         {
             get { return null; }
         }
-
 
         protected abstract IList<String> GetEpisodeSearchUrls(string seriesTitle, int seasonNumber, int episodeNumber);
         protected abstract IList<String> GetDailyEpisodeSearchUrls(string seriesTitle, DateTime date);
@@ -74,11 +80,28 @@ namespace NzbDrone.Core.Providers.Indexer
         }
 
         /// <summary>
+        /// This method can be overwritten to provide pre-parse the title
+        /// </summary>
+        /// <param name="item">RSS item that needs to be parsed</param>
+        /// <returns></returns>
+        protected virtual string TitlePreParser(SyndicationItem item)
+        {
+            return item.Title.Text;
+        }
+
+        /// <summary>
         ///   Generates direct link to download an NZB
         /// </summary>
         /// <param name = "item">RSS Feed item to generate the link for</param>
         /// <returns>Download link URL</returns>
         protected abstract string NzbDownloadUrl(SyndicationItem item);
+
+        /// <summary>
+        ///   Generates link to the NZB info at the indexer
+        /// </summary>
+        /// <param name = "item">RSS Feed item to generate the link for</param>
+        /// <returns>Nzb Info URL</returns>
+        protected abstract string NzbInfoUrl(SyndicationItem item);
 
         /// <summary>
         ///   Fetches RSS feed and process each news item.
@@ -93,31 +116,31 @@ namespace NzbDrone.Core.Providers.Indexer
             result = Fetch(Urls);
 
 
-            _logger.Info("Finished processing feeds from " + Name);
+            _logger.Debug("Finished processing feeds from " + Name);
             return result;
         }
 
         public virtual IList<EpisodeParseResult> FetchSeason(string seriesTitle, int seasonNumber)
         {
-            _logger.Debug("Searching {0} for {1}-Season {2}", Name, seriesTitle, seasonNumber);
+            _logger.Debug("Searching {0} for {1} Season {2}", Name, seriesTitle, seasonNumber);
 
             var searchUrls = GetSeasonSearchUrls(GetQueryTitle(seriesTitle), seasonNumber);
             var result = Fetch(searchUrls);
 
-            _logger.Info("Finished searching {0} for {1}-S{2}, Found {3}", Name, seriesTitle, seasonNumber, result.Count);
+            _logger.Info("Finished searching {0} for {1} Season {2}, Found {3}", Name, seriesTitle, seasonNumber, result.Count);
             return result;
         }
 
         public virtual IList<EpisodeParseResult> FetchPartialSeason(string seriesTitle, int seasonNumber, int episodePrefix)
         {
-            _logger.Debug("Searching {0} for {1}-Season {2}, Prefix: {3}", Name, seriesTitle, seasonNumber, episodePrefix);
+            _logger.Debug("Searching {0} for {1} Season {2}, Prefix: {3}", Name, seriesTitle, seasonNumber, episodePrefix);
 
 
             var searchUrls = GetPartialSeasonSearchUrls(GetQueryTitle(seriesTitle), seasonNumber, episodePrefix);
 
             var result = Fetch(searchUrls);
 
-            _logger.Info("Finished searching {0} for {1}-S{2}, Found {3}", Name, seriesTitle, seasonNumber, result.Count);
+            _logger.Info("Finished searching {0} for {1} Season {2}, Found {3}", Name, seriesTitle, seasonNumber, result.Count);
             return result;
         }
 
@@ -129,7 +152,7 @@ namespace NzbDrone.Core.Providers.Indexer
 
             var result = Fetch(searchUrls);
 
-            _logger.Info("Finished searching {0} for {1}-S{2}E{3:00}, Found {4}", Name, seriesTitle, seasonNumber, episodeNumber, result.Count);
+            _logger.Info("Finished searching {0} for {1} S{2:00}E{3:00}, Found {4}", Name, seriesTitle, seasonNumber, episodeNumber, result.Count);
             return result;
 
         }
@@ -174,8 +197,8 @@ namespace NzbDrone.Core.Providers.Indexer
                             if (parsedEpisode != null)
                             {
                                 parsedEpisode.NzbUrl = NzbDownloadUrl(item);
-                                parsedEpisode.Indexer = Name;
-                                parsedEpisode.OriginalString = item.Title.Text;
+                                parsedEpisode.NzbInfoUrl = NzbInfoUrl(item);
+                                parsedEpisode.Indexer = String.IsNullOrWhiteSpace(parsedEpisode.Indexer) ? Name : parsedEpisode.Indexer;
                                 result.Add(parsedEpisode);
                             }
                         }
@@ -192,18 +215,18 @@ namespace NzbDrone.Core.Providers.Indexer
                 {
                     if (webException.Message.Contains("503"))
                     {
-                        _logger.Warn("{0} server is currently unbelievable. {1}", Name, webException.Message);
+                        _logger.Warn("{0} server is currently unbelievable.{1} {2}", Name,url, webException.Message);
                     }
                     else
                     {
                         webException.Data.Add("FeedUrl", url);
-                        _logger.ErrorException("An error occurred while processing feed: " + Name, webException);
+                        _logger.ErrorException("An error occurred while processing feed. " + url, webException);
                     }
                 }
                 catch (Exception feedEx)
                 {
                     feedEx.Data.Add("FeedUrl", url);
-                    _logger.ErrorException("An error occurred while processing feed: " + Name, feedEx);
+                    _logger.ErrorException("An error occurred while processing feed. " + url, feedEx);
                 }
             }
 
@@ -217,7 +240,16 @@ namespace NzbDrone.Core.Providers.Indexer
         /// <returns>Detailed episode info</returns>
         public EpisodeParseResult ParseFeed(SyndicationItem item)
         {
-            var episodeParseResult = Parser.ParseTitle(item.Title.Text);
+            var title = TitlePreParser(item);
+
+            var episodeParseResult = Parser.ParseTitle(title);
+            if (episodeParseResult != null)
+            {
+                episodeParseResult.Age = DateTime.Now.Date.Subtract(item.PublishDate.Date).Days;
+                episodeParseResult.OriginalString = title;
+            }
+
+            _logger.Trace("Parsed: {0} from: {1}", episodeParseResult, item.Title.Text);
 
             return CustomParser(item, episodeParseResult);
         }
@@ -229,6 +261,8 @@ namespace NzbDrone.Core.Providers.Indexer
         /// <returns></returns>
         public virtual string GetQueryTitle(string title)
         {
+            title = RemoveThe.Replace(title, string.Empty);
+
             var cleanTitle = TitleSearchRegex.Replace(title, "+").Trim('+', ' ');
 
             //remove any repeating +s

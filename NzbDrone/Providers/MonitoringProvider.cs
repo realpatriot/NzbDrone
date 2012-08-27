@@ -44,7 +44,7 @@ namespace NzbDrone.Providers
 
             AppDomain.CurrentDomain.ProcessExit += ProgramExited;
             AppDomain.CurrentDomain.DomainUnload += ProgramExited;
-            
+
             _processPriorityCheckTimer = new Timer(EnsurePriority);
             _processPriorityCheckTimer.Change(TimeSpan.FromSeconds(15), TimeSpan.FromMinutes(30));
 
@@ -55,17 +55,24 @@ namespace NzbDrone.Providers
 
         public virtual void EnsurePriority(object sender)
         {
-            var currentProcess = _processProvider.GetCurrentProcess();
-            if (currentProcess.Priority != ProcessPriorityClass.Normal)
+            try
             {
-                _processProvider.SetPriority(currentProcess.Id, ProcessPriorityClass.Normal);
-            }
+                var currentProcess = _processProvider.GetCurrentProcess();
+                if (currentProcess.Priority != ProcessPriorityClass.Normal)
+                {
+                    _processProvider.SetPriority(currentProcess.Id, ProcessPriorityClass.Normal);
+                }
 
-            var iisProcess = _processProvider.GetProcessById(_iisProvider.IISProcessId);
-            if (iisProcess != null && iisProcess.Priority != ProcessPriorityClass.Normal &&
-                iisProcess.Priority != ProcessPriorityClass.AboveNormal)
+                var iisProcess = _processProvider.GetProcessById(_iisProvider.IISProcessId);
+                if (iisProcess != null && iisProcess.Priority != ProcessPriorityClass.Normal &&
+                    iisProcess.Priority != ProcessPriorityClass.AboveNormal)
+                {
+                    _processProvider.SetPriority(iisProcess.Id, ProcessPriorityClass.Normal);
+                }
+            }
+            catch (Exception e)
             {
-                _processProvider.SetPriority(iisProcess.Id, ProcessPriorityClass.Normal);
+                logger.WarnException("Unable to verify priority", e);
             }
         }
 
@@ -75,13 +82,7 @@ namespace NzbDrone.Providers
 
             try
             {
-                ICredentials identity = null;
-
-                if (_configFileProvider.AuthenticationType == AuthenticationType.Windows)
-                {
-                    identity = CredentialCache.DefaultCredentials;
-                }
-
+                ICredentials identity = CredentialCache.DefaultCredentials;
                 _httpProvider.DownloadString(_iisProvider.AppUrl, identity); //This should preload the home page, making the first load faster.
                 string response = _httpProvider.DownloadString(_iisProvider.AppUrl + "/health", identity);
 
@@ -100,11 +101,11 @@ namespace NzbDrone.Providers
             catch (Exception ex)
             {
                 _pingFailCounter++;
-                logger.ErrorException("Application pool is not responding. Count " + _pingFailCounter, ex);
-                if (_pingFailCounter > 4)
+                logger.Error("Application pool is not responding. Count " + _pingFailCounter + ex.Message);
+                if (_pingFailCounter > 10)
                 {
                     _pingFailCounter = 0;
-                    //_iisProvider.RestartServer();
+                    _iisProvider.RestartServer();
                 }
             }
         }
@@ -119,7 +120,7 @@ namespace NzbDrone.Providers
         {
             Console.WriteLine("EPIC FAIL: {0}", excepion);
 
-            if (EnviromentProvider.IsProduction)
+            if (EnvironmentProvider.IsProduction)
             {
                 new Client
                     {
