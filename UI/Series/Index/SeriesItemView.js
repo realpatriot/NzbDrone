@@ -10,8 +10,18 @@ define([
 ], function () {
 
     NzbDrone.Series.Index.SeriesItemView = Backbone.Marionette.ItemView.extend({
-        template: 'Series/Index/SeriesItemTemplate',
         tagName : 'tr',
+        template: 'Series/Index/SeriesItemTemplate',
+
+        getTemplate: function(){
+            if (NzbDrone.Config.SeriesView() === 1){
+                this.tagName = 'div';
+                return 'Series/Index/SeriesGridItemTemplate';
+            }
+            else {
+                return 'Series/Index/SeriesItemTemplate';
+            }
+        },
 
         ui: {
             'progressbar': '.progress .bar'

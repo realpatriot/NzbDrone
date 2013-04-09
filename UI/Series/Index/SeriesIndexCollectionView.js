@@ -1,12 +1,29 @@
 ﻿'use strict';
 
-define(['app', 'Quality/QualityProfileCollection', 'Series/Index/SeriesItemView'], function (app, qualityProfileCollection) {
+define(['app', 'Quality/QualityProfileCollection', 'Series/Index/SeriesItemView', 'Config'], function (app, qualityProfileCollection) {
     NzbDrone.Series.Index.SeriesIndexCollectionView = Backbone.Marionette.CompositeView.extend({
         itemView                : NzbDrone.Series.Index.SeriesItemView,
-        itemViewContainer       : 'tbody',
+        itemViewContainer       : '#x-series',
         template                : 'Series/Index/SeriesIndexTemplate',
         qualityProfileCollection: qualityProfileCollection,
         //emptyView: NzbDrone.Series.EmptySeriesCollectionView,
+
+        getTemplate: function(){
+            if (NzbDrone.Config.SeriesView() === 1){
+                return 'Series/Index/SeriesIndexGridTemplate';
+            }
+            else {
+                return 'Series/Index/SeriesIndexTemplate';
+            }
+        },
+
+        ui: {
+            table: '.x-series-table'
+        },
+
+        events: {
+            'click .x-series-change-view': 'changeViewTemplate'
+        },
 
         initialize: function () {
             this.collection = new NzbDrone.Series.SeriesCollection();
@@ -16,10 +33,6 @@ define(['app', 'Quality/QualityProfileCollection', 'Series/Index/SeriesItemView'
             this.qualityProfileCollection.fetch();
 
             this.itemViewOptions = { qualityProfiles: this.qualityProfileCollection };
-        },
-
-        ui: {
-            table: '.x-series-table'
         },
 
         onItemRemoved: function () {
@@ -85,6 +98,19 @@ define(['app', 'Quality/QualityProfileCollection', 'Series/Index/SeriesItemView'
                     $(this).children('.tablesorter-header-inner').append('<i class="icon-sort pull-right">');
                 }
             });
+        },
+
+        changeViewTemplate: function(event) {
+            event.preventDefault();
+            if ($(event.currentTarget).hasClass('x-series-show-grid')) {
+                NzbDrone.Config.SeriesView(1);
+                this.render();
+            }
+
+            else {
+                NzbDrone.Config.SeriesView(0);
+                this.render();
+            }
         }
     });
 });
