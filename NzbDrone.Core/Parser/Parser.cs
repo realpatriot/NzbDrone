@@ -202,18 +202,6 @@ namespace NzbDrone.Core.Parser
             return result;
         }
 
-        public static string ParseSeriesName(string title)
-        {
-            Logger.Trace("Parsing string '{0}'", title);
-
-            var parseResult = ParseTitle<ParseResult>(title);
-
-            if (parseResult == null)
-                return NormalizeTitle(title);
-
-            return parseResult.CleanTitle;
-        }
-
         private static QualityModel ParseQuality(string name)
         {
             Logger.Trace("Trying to parse quality for {0}", name);

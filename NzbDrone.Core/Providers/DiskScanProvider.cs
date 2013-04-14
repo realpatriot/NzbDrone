@@ -19,58 +19,39 @@ namespace NzbDrone.Core.Providers
         private readonly IMediaFileService _mediaFileService;
         private readonly RecycleBinProvider _recycleBinProvider;
         private readonly MediaInfoProvider _mediaInfoProvider;
-        private readonly IMoveEpisodeFiles _moveEpisodeFiles;
-        private readonly IEpisodeMappingService _episodeMappingService;
+        private readonly IParsingService _parsingService;
 
         public DiskScanProvider(DiskProvider diskProvider, ICleanGhostFiles ghostFileCleaner, IMediaFileService mediaFileService,
-                                RecycleBinProvider recycleBinProvider, MediaInfoProvider mediaInfoProvider, IMoveEpisodeFiles moveEpisodeFiles,
-            IEpisodeMappingService episodeMappingService)
+                                RecycleBinProvider recycleBinProvider, MediaInfoProvider mediaInfoProvider,
+            IParsingService parsingService)
         {
             _diskProvider = diskProvider;
             _ghostFileCleaner = ghostFileCleaner;
             _mediaFileService = mediaFileService;
             _recycleBinProvider = recycleBinProvider;
             _mediaInfoProvider = mediaInfoProvider;
-            _moveEpisodeFiles = moveEpisodeFiles;
-            _episodeMappingService = episodeMappingService;
+            _parsingService = parsingService;
         }
 
-        public DiskScanProvider()
+        public virtual void Scan(Series series)
         {
-        }
-
-        public virtual List<EpisodeFile> Scan(Series series)
-        {
-            return Scan(series, series.Path);
-        }
-
-        public virtual List<EpisodeFile> Scan(Series series, string path)
-        {
-            if (!_diskProvider.FolderExists(path))
+            if (!_diskProvider.FolderExists(series.Path))
             {
-                Logger.Warn("Series folder doesn't exist: {0}", path);
-                return new List<EpisodeFile>();
+                Logger.Warn("Series folder doesn't exist: {0}", series.Path);
+                return;
             }
-
 
             _ghostFileCleaner.RemoveNonExistingFiles(series.Id);
 
-            var mediaFileList = GetVideoFiles(path);
-            var importedFiles = new List<EpisodeFile>();
+            var mediaFileList = GetVideoFiles(series.Path);
 
             foreach (var filePath in mediaFileList)
             {
-                var file = ImportFile(series, filePath);
-                if (file != null)
-                {
-                    importedFiles.Add(file);
-                }
+                ImportFile(series, filePath);
             }
 
             //Todo: Find the "best" episode file for all found episodes and import that one
             //Todo: Move the episode linking to here, instead of import (or rename import)
-
-            return importedFiles;
         }
 
         public virtual EpisodeFile ImportFile(Series series, string filePath)
@@ -83,7 +64,7 @@ namespace NzbDrone.Core.Providers
                 return null;
             }
 
-            var parseResult = _episodeMappingService.GetEpisodes(filePath);
+            var parseResult = _parsingService.GetEpisodes(filePath);
 
             if (parseResult == null)
             {
@@ -136,35 +117,6 @@ namespace NzbDrone.Core.Providers
             //Todo: Separate episodeFile creation from importing (pass file to import to import)
             _mediaFileService.Add(episodeFile);
             return episodeFile;
-        }
-
-
-        public virtual void CleanUpDropFolder(string path)
-        {
-            //Todo: We should rename files before importing them to prevent this issue from ever happening
-
-            var filesOnDisk = GetVideoFiles(path);
-
-            foreach (var file in filesOnDisk)
-            {
-                try
-                {
-                    var episodeFile = _mediaFileService.GetFileByPath(file);
-
-                    if (episodeFile != null)
-                    {
-                        Logger.Trace("[{0}] was imported but not moved, moving it now", file);
-
-                        _moveEpisodeFiles.MoveEpisodeFile(episodeFile, true);
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.WarnException("Failed to move episode file from drop folder: " + file, ex);
-                    throw;
-                }
-            }
         }
 
         public virtual List<string> GetVideoFiles(string path, bool allDirectories = true)

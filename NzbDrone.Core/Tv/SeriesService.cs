@@ -98,7 +98,7 @@ namespace NzbDrone.Core.Tv
             if (String.IsNullOrWhiteSpace(newSeries.FolderName))
             {
                 newSeries.FolderName = FileNameBuilder.CleanFilename(newSeries.Title);
-                _diskProvider.CreateDirectory(Path.Combine(_rootFolderService.Get(newSeries.RootFolderId).Path, newSeries.FolderName));
+                _diskProvider.CreateFolder(Path.Combine(_rootFolderService.Get(newSeries.RootFolderId).Path, newSeries.FolderName));
             }
 
             _logger.Info("Adding Series [{0}] Path: [{1}]", newSeries.Title, newSeries.Path);

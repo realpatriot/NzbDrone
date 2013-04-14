@@ -59,7 +59,7 @@ namespace NzbDrone.Core.MediaFiles
                 return null;
             }
 
-            _diskProvider.CreateDirectory(new FileInfo(newFile).DirectoryName);
+            _diskProvider.CreateFolder(new FileInfo(newFile).DirectoryName);
 
             _logger.Debug("Moving [{0}] > [{1}]", episodeFile.Path, newFile);
             _diskProvider.MoveFile(episodeFile.Path, newFile);

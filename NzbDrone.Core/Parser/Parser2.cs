@@ -57,18 +57,19 @@ namespace NzbDrone.Core.Parser
 
 
 
-    public interface IEpisodeMappingService
+    public interface IParsingService
     {
         LocalEpisode GetEpisodes(string title);
+        Series GetSeries(string title);
     }
 
-    public class EpisodeMappingService : IEpisodeMappingService
+    public class ParsingService : IParsingService
     {
         private readonly IEpisodeService _episodeService;
         private readonly ISeriesService _seriesService;
         private readonly Logger _logger;
 
-        public EpisodeMappingService(IEpisodeService episodeService, ISeriesService seriesService, Logger logger)
+        public ParsingService(IEpisodeService episodeService, ISeriesService seriesService, Logger logger)
         {
             _episodeService = episodeService;
             _seriesService = seriesService;
@@ -105,6 +106,12 @@ namespace NzbDrone.Core.Parser
                     Series = series,
                     Episodes = episodes
                 };
+        }
+
+        public Series GetSeries(string title)
+        {
+            var parseResult = SimpleParser.ParseTitle(title);
+            return _seriesService.FindByTitle(parseResult.SeriesTitle);
         }
 
         private List<Episode> GetEpisodesByParseResult(ParsedEpisodeInfo parseResult, Series series)
