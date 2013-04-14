@@ -89,7 +89,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
 
             var file = Path.Combine(TempFolder, "test.avi");
 
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(file);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(file);
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
 
             
             Mocker.GetMock<ISeriesRepository>().Setup(s => s.FindByTitle(It.IsAny<String>())).Returns<Series>(null).Verifiable();
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(file);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(file);
 
             
             Mocker.GetMock<ISeriesRepository>().Verify(s => s.FindByTitle(It.IsAny<String>()), Times.Once());
@@ -117,7 +117,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
 
             
             Mocker.GetMock<ISeriesRepository>().Setup(s => s.FindByTitle(It.IsAny<String>())).Returns<Series>(null);
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(file);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(file);
 
             
             Mocker.GetMock<DiskProvider>().Verify(s => s.GetSize(It.IsAny<String>()), Times.Never());
@@ -136,7 +136,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
             WithImportedFile(file);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(file);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(file);
 
             
             Mocker.GetMock<IMoveEpisodeFiles>().Verify(s => s.MoveEpisodeFile(It.IsAny<EpisodeFile>(), true), Times.Once());
@@ -171,7 +171,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                     .Returns(true);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(downloadName);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(downloadName);
 
 
             
@@ -196,7 +196,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                     .Returns(8);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(downloadName);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(downloadName);
 
 
             
@@ -219,7 +219,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                     .Returns(10);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(downloadName);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(downloadName);
 
 
             
@@ -238,7 +238,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                                 .Returns(false);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(downloadName);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(downloadName);
 
 
             
@@ -257,7 +257,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                                 .Returns(true);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessVideoFile(downloadName);
+            Mocker.Resolve<DropFolderImportService>().ProcessVideoFile(downloadName);
 
 
             

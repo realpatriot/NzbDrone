@@ -479,7 +479,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ExternalNotification\PlexProvider.cs" />
-    <Compile Include="Providers\PostDownloadProvider.cs">
+    <Compile Include="Providers\DropfolderImportService.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Providers\ProwlProvider.cs">

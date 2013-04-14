@@ -82,7 +82,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                 .Returns(true);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessDropFolder(@"C:\drop\");
+            Mocker.Resolve<DropFolderImportService>().ProcessDropFolder(@"C:\drop\");
 
             
             Mocker.GetMock<DiskScanProvider>().Verify(c => c.Scan(It.IsAny<Series>(), subFolders[0]), Times.Once());
@@ -125,7 +125,7 @@ namespace NzbDrone.Core.Test.ProviderTests.PostDownloadProviderTests
                 .Returns(true);
 
             
-            Mocker.Resolve<PostDownloadProvider>().ProcessDropFolder(@"C:\drop\");
+            Mocker.Resolve<DropFolderImportService>().ProcessDropFolder(@"C:\drop\");
 
 
             

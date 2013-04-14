@@ -24,7 +24,7 @@ namespace NzbDrone.Common
 
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        public virtual DateTime GetLastDirectoryWrite(string path)
+        public virtual DateTime GetLastFolderWrite(string path)
         {
             if (!FolderExists(path))
             {

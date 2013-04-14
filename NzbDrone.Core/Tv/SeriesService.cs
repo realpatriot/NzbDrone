@@ -31,6 +31,7 @@ namespace NzbDrone.Core.Tv
         void DeleteSeries(int seriesId, bool deleteFiles);
         List<Series> GetAllSeries();
         void UpdateSeries(Series series);
+        bool SeriesPathExists(string folder);
     }
 
     public class SeriesService : ISeriesService, IHandleAsync<SeriesAddedEvent>
@@ -170,6 +171,11 @@ namespace NzbDrone.Core.Tv
         public void UpdateSeries(Series series)
         {
             _seriesRepository.Update(series);
+        }
+
+        public bool SeriesPathExists(string folder)
+        {
+            return _seriesRepository.SeriesPathExists(folder);
         }
 
         public void HandleAsync(SeriesAddedEvent message)

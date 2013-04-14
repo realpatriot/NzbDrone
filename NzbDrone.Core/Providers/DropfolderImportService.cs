@@ -8,20 +8,30 @@ using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Providers
 {
-    public class PostDownloadProvider
+    public interface IDropFolderImportService
+    {
+        void ProcessDropFolder(string dropFolder);
+    }
+
+    public class DropFolderImportService : IDropFolderImportService
     {
         private readonly DiskProvider _diskProvider;
         private readonly DiskScanProvider _diskScanProvider;
-        private readonly ISeriesRepository _seriesRepository;
+        private readonly ISeriesService _seriesService;
         private readonly IMoveEpisodeFiles _episodeFileMover;
         private readonly IParsingService _parsingService;
         private readonly Logger _logger;
 
-        public PostDownloadProvider(DiskProvider diskProvider, DiskScanProvider diskScanProvider, ISeriesRepository seriesRepository, IMoveEpisodeFiles episodeFileMover, IParsingService parsingService, Logger logger)
+        public DropFolderImportService(DiskProvider diskProvider,
+            DiskScanProvider diskScanProvider,
+            ISeriesService seriesService,
+            IMoveEpisodeFiles episodeFileMover,
+            IParsingService parsingService,
+            Logger logger)
         {
             _diskProvider = diskProvider;
             _diskScanProvider = diskScanProvider;
-            _seriesRepository = seriesRepository;
+            _seriesService = seriesService;
             _episodeFileMover = episodeFileMover;
             _parsingService = parsingService;
             _logger = logger;
@@ -33,9 +43,9 @@ namespace NzbDrone.Core.Providers
             {
                 try
                 {
-                    if (!_seriesRepository.SeriesPathExists(subfolder))
+                    if (!_seriesService.SeriesPathExists(subfolder))
                     {
-                        ProcessDownload(new DirectoryInfo(subfolder));
+                        ProcessSubFolder(new DirectoryInfo(subfolder));
                     }
                 }
                 catch (Exception e)
@@ -58,8 +68,14 @@ namespace NzbDrone.Core.Providers
             }
         }
 
-        private void ProcessDownload(DirectoryInfo subfolderInfo)
+        public void ProcessSubFolder(DirectoryInfo subfolderInfo)
         {
+            if (_diskProvider.GetLastFolderWrite(subfolderInfo.FullName).AddMinutes(2) > DateTime.UtcNow)
+            {
+                _logger.Trace("[{0}] is too fresh. skipping", subfolderInfo.FullName);
+                return;
+            }
+
             var series = _parsingService.GetSeries(subfolderInfo.Name);
 
             if (series == null)
@@ -77,7 +93,7 @@ namespace NzbDrone.Core.Providers
         }
 
 
-        private void ProcessVideoFile(string videoFile, Series series)
+        public void ProcessVideoFile(string videoFile, Series series)
         {
             if (_diskProvider.GetLastFileWrite(videoFile).AddMinutes(2) > DateTime.UtcNow)
             {
