@@ -30,7 +30,7 @@ namespace NzbDrone.Core.Model
 
         public QualityModel Quality { get; set; }
 
-        public LanguageType Language { get; set; }
+        public Language Language { get; set; }
 
         public string OriginalString { get; set; }
 
@@ -115,7 +115,7 @@ namespace NzbDrone.Core.Model
             foreach (var episode in Episodes)
             {
                 episodeString.Add(String.Format("{0}x{1:00}", episode.SeasonNumber, episode.EpisodeNumber));
-                episodeNames.Add(Parser.CleanupEpisodeTitle(episode.Title));
+                episodeNames.Add(Parser.Parser.CleanupEpisodeTitle(episode.Title));
             }
 
             var epNumberString = String.Join("-", episodeString);
@@ -140,8 +140,8 @@ namespace NzbDrone.Core.Model
     }
 
 
-    public class FileNameParseResult :ParseResult
+    public class FileNameParseResult : ParseResult
     {
-        
+
     }
 }

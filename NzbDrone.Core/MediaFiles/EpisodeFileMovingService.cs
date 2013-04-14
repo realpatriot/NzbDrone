@@ -78,7 +78,7 @@ namespace NzbDrone.Core.MediaFiles
             episodeFile.Path = newFile;
             _mediaFileService.Update(episodeFile);
 
-            var parseResult = Parser.ParsePath(episodeFile.Path);
+            var parseResult = Parser.Parser.ParsePath(episodeFile.Path);
             parseResult.Series = series;
             parseResult.Quality = episodeFile.Quality;
             parseResult.Episodes = episodes;

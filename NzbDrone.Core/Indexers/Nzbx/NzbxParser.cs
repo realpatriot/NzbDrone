@@ -28,7 +28,7 @@ namespace NzbDrone.Core.Indexers.Nzbx
             {
                 try
                 {
-                    var episodeParseResult = Parser.ParseTitle<IndexerParseResult>(item.Name);
+                    var episodeParseResult = Parser.Parser.ParseTitle<IndexerParseResult>(item.Name);
                     if (episodeParseResult != null)
                     {
                         episodeParseResult.Age = DateTime.Now.Date.Subtract(item.PostDate).Days;

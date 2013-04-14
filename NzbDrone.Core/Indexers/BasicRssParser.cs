@@ -77,7 +77,7 @@ namespace NzbDrone.Core.Indexers
         {
             var title = GetTitle(item);
 
-            var episodeParseResult = Parser.ParseTitle<IndexerParseResult>(title);
+            var episodeParseResult = Parser.Parser.ParseTitle<IndexerParseResult>(title);
             if (episodeParseResult != null)
             {
                 episodeParseResult.Age = DateTime.Now.Date.Subtract(item.PublishDate.Date).Days;

@@ -33,7 +33,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             parseResultMulti = new IndexerParseResult
                                    {
                                        SeriesTitle = "Title",
-                                       Language = LanguageType.English,
+                                       Language = Language.English,
                                        Quality = new QualityModel(Quality.SDTV, true),
                                        EpisodeNumbers = new List<int> { 3, 4 },
                                        SeasonNumber = 12,
@@ -43,7 +43,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             parseResultSingle = new IndexerParseResult
                                     {
                                         SeriesTitle = "Title",
-                                        Language = LanguageType.English,
+                                        Language = Language.English,
                                         Quality = new QualityModel(Quality.SDTV, true),
                                         EpisodeNumbers = new List<int> { 3 },
                                         SeasonNumber = 12,

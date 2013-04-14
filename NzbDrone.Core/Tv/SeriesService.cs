@@ -70,7 +70,7 @@ namespace NzbDrone.Core.Tv
             series.AirTime = tvDbSeries.AirTime;
             series.Overview = tvDbSeries.Overview;
             series.Status = tvDbSeries.Status;
-            series.CleanTitle = Parser.NormalizeTitle(tvDbSeries.Title);
+            series.CleanTitle = Parser.Parser.NormalizeTitle(tvDbSeries.Title);
             series.LastInfoSync = DateTime.Now;
             series.Runtime = tvDbSeries.Runtime;
             series.Images = tvDbSeries.Images;
@@ -102,7 +102,7 @@ namespace NzbDrone.Core.Tv
             _logger.Info("Adding Series [{0}] Path: [{1}]", newSeries.Title, newSeries.Path);
 
             newSeries.Monitored = true;
-            newSeries.CleanTitle = Parser.NormalizeTitle(newSeries.Title);
+            newSeries.CleanTitle = Parser.Parser.NormalizeTitle(newSeries.Title);
             if (newSeries.QualityProfileId == 0)
                 newSeries.QualityProfileId = _configService.DefaultQualityProfile;
 

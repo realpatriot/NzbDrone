@@ -26,7 +26,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             parseResult = Builder<IndexerParseResult>
                     .CreateNew()
-                    .With(p => p.Language = LanguageType.English)
+                    .With(p => p.Language = Language.English)
                     .Build();
         }
 
@@ -34,7 +34,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             parseResult = Builder<IndexerParseResult>
                     .CreateNew()
-                    .With(p => p.Language = LanguageType.German)
+                    .With(p => p.Language = Language.German)
                     .Build();
         }
 

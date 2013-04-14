@@ -22,7 +22,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             parseResult = new IndexerParseResult
                                     {
                                         SeriesTitle = "Title",
-                                        Language = LanguageType.English,
+                                        Language = Language.English,
                                         Quality = new QualityModel(Quality.SDTV, true),
                                         EpisodeNumbers = new List<int> { 3 },
                                         SeasonNumber = 12,

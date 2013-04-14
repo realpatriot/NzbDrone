@@ -1,6 +1,6 @@
 ﻿namespace NzbDrone.Core.Model
 {
-    public enum LanguageType
+    public enum Language
     {
         English = 0,
         French = 1,

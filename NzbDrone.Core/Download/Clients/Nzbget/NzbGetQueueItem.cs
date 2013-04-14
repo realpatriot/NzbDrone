@@ -1,24 +1,21 @@
 ﻿using System;
-using System.Linq;
-using Newtonsoft.Json;
 using NzbDrone.Core.Model;
 
 namespace NzbDrone.Core.Download.Clients.Nzbget
 {
-    public class QueueItem
+    public class NzbGetQueueItem
     {
-        private string _title;
+        private string _nzbName;
 
         public Int32 NzbId { get; set; }
 
-        [JsonProperty(PropertyName = "NzbName")]
-        public string Title
+        public string NzbName
         {
-            get { return _title; }
+            get { return _nzbName; }
             set
             {
-                _title = value;
-                ParseResult = Parser.ParseTitle<ParseResult>(value.Replace("DUPLICATE / ", String.Empty));
+                _nzbName = value;
+                ParseResult = Parser.Parser.ParseTitle<ParseResult>(value.Replace("DUPLICATE / ", String.Empty));
             }
         }
 

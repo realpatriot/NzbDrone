@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NLog;
@@ -12,7 +13,7 @@ using NzbDrone.Core.Organizer;
 
 namespace NzbDrone.Core.Download.Clients
 {
-    public class PneumaticProvider : IDownloadClient
+    public class PneumaticClient : IDownloadClient
     {
         private readonly IConfigService _configService;
         private readonly IHttpProvider _httpProvider;
@@ -20,7 +21,7 @@ namespace NzbDrone.Core.Download.Clients
 
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        public PneumaticProvider(IConfigService configService, IHttpProvider httpProvider,
+        public PneumaticClient(IConfigService configService, IHttpProvider httpProvider,
                                     DiskProvider diskProvider)
         {
             _configService = configService;
@@ -33,7 +34,7 @@ namespace NzbDrone.Core.Download.Clients
             try
             {
                 //Todo: Allow full season releases
-                if (Parser.ParseTitle<ParseResult>(title).FullSeason)
+                if (Parser.Parser.ParseTitle<ParseResult>(title).FullSeason)
                 {
                     logger.Info("Skipping Full Season Release: {0}", title);
                     return false;
@@ -66,6 +67,11 @@ namespace NzbDrone.Core.Download.Clients
                 logger.WarnException("Failed to download NZB: " + url, ex);
                 return false;
             }
+        }
+
+        public IEnumerable<QueueItem> GetQueue()
+        {
+            return new QueueItem[0];
         }
 
         public virtual bool IsInQueue(IndexerParseResult newParseResult)

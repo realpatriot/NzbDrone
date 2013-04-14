@@ -23,7 +23,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         public virtual bool IsSatisfiedBy(IndexerParseResult subject)
         {
             _logger.Trace("Checking if report meets language requirements. {0}", subject.Language);
-            if (subject.Language != LanguageType.English)
+            if (subject.Language != Language.English)
             {
                 _logger.Trace("Report Language: {0} rejected because it is not English", subject.Language);
                 return false;

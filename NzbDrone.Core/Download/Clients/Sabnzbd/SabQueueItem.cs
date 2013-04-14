@@ -25,7 +25,7 @@ namespace NzbDrone.Core.Download.Clients.Sabnzbd
             set
             {
                 _title = value;
-                ParseResult = Parser.ParseTitle<ParseResult>(value.Replace("DUPLICATE / ", String.Empty));
+                ParseResult = Parser.Parser.ParseTitle<ParseResult>(value.Replace("DUPLICATE / ", String.Empty));
             }
         }
 

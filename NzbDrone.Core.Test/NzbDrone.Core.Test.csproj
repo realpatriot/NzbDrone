@@ -207,6 +207,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Qualities\QualityProfileFixture.cs" />
     <Compile Include="TvTests\SeriesProviderTest.cs" />
+    <Compile Include="UpdateTests\UpdatePackageProviderFixture.cs" />
     <Compile Include="UpdateTests\GetAvailableUpdateFixture.cs" />
     <Compile Include="UpdateTests\GetUpdateLogFixture.cs" />
     <Compile Include="XbmcVersionTests.cs" />

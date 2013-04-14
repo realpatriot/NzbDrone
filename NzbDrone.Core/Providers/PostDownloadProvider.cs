@@ -76,7 +76,7 @@ namespace NzbDrone.Core.Providers
                 return;
             }
 
-            string seriesName = Parser.ParseSeriesName(RemoveStatusFromFolderName(subfolderInfo.Name));
+            string seriesName = Parser.Parser.ParseSeriesName(RemoveStatusFromFolderName(subfolderInfo.Name));
             var series = _seriesRepository.GetByTitle(seriesName);
 
             if (series == null)
@@ -142,7 +142,7 @@ namespace NzbDrone.Core.Providers
                 return;
             }
 
-            var seriesName = Parser.ParseSeriesName(Path.GetFileNameWithoutExtension(videoFile));
+            var seriesName = Parser.Parser.ParseSeriesName(Path.GetFileNameWithoutExtension(videoFile));
             var series = _seriesRepository.GetByTitle(seriesName);
 
             if (series == null)

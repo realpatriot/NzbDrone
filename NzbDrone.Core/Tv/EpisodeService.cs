@@ -154,7 +154,7 @@ namespace NzbDrone.Core.Tv
                     }
                     else
                     {
-                        parseResult.EpisodeTitle = Parser.CleanupEpisodeTitle(episodeInfo.Title);
+                        parseResult.EpisodeTitle = Parser.Parser.CleanupEpisodeTitle(episodeInfo.Title);
                     }
                 }
                 else
