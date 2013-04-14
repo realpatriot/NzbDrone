@@ -1,6 +1,7 @@
 ﻿using NzbDrone.Common.Eventing;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.MediaFiles.Events

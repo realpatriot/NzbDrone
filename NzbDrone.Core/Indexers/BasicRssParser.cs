@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using NLog;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.Indexers
 {

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 
-namespace NzbDrone.Core.Parser
+namespace NzbDrone.Core.Parser.Model
 {
     public class ReportInfo
     {

@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using NLog;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.Parser
 {
     public interface IParsingService
     {
-        LocalEpisode GetEpisodes(string title);
+        LocalEpisode GetEpisodes(string fileName, Series series);
         Series GetSeries(string title);
-        RemoteEpisode Map(IEnumerable<ReportInfo> indexerParseResult);
         RemoteEpisode Map(ReportInfo indexerParseResult);
     }
 
@@ -28,18 +28,11 @@ namespace NzbDrone.Core.Parser
         }
 
 
-        public LocalEpisode GetEpisodes(string title)
+        public LocalEpisode GetEpisodes(string fileName, Series series)
         {
-            var parseResult = Parser.ParseTitle(title);
+            var parseResult = Parser.ParseTitle(fileName);
 
             if (parseResult == null)
-            {
-                return null;
-            }
-
-            var series = _seriesService.FindByTitle(parseResult.Title);
-
-            if (series == null)
             {
                 return null;
             }
@@ -54,7 +47,6 @@ namespace NzbDrone.Core.Parser
             return new LocalEpisode
                 {
                     ParsedEpisodeInfo = parseResult,
-                    Series = series,
                     Episodes = episodes
                 };
         }
@@ -63,11 +55,6 @@ namespace NzbDrone.Core.Parser
         {
             var parseResult = Parser.ParseTitle(title);
             return _seriesService.FindByTitle(parseResult.SeriesTitle);
-        }
-
-        public RemoteEpisode Map(IEnumerable<ReportInfo> indexerParseResult)
-        {
-            throw new NotImplementedException();
         }
 
         public RemoteEpisode Map(ReportInfo indexerParseResult)

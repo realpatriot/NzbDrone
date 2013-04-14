@@ -64,7 +64,7 @@ namespace NzbDrone.Core.Providers
                 return null;
             }
 
-            var parseResult = _parsingService.GetEpisodes(filePath);
+            var parseResult = _parsingService.GetEpisodes(filePath, series);
 
             if (parseResult == null)
             {

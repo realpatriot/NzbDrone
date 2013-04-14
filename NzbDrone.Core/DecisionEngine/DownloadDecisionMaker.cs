@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.DecisionEngine.Specifications.Search;
 using NzbDrone.Core.IndexerSearch.Definitions;
-using NzbDrone.Core.Model;
 using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.DecisionEngine
 {
@@ -29,9 +29,7 @@ namespace NzbDrone.Core.DecisionEngine
             foreach (var report in reports)
             {
                 var parseResult = _parsingService.Map(report);
-
-                parseResult.Decision = new DownloadDecision(parseResult, GetGeneralRejectionReasons(parseResult).ToArray());
-                yield return parseResult.Decision;
+                yield return new DownloadDecision(parseResult, GetGeneralRejectionReasons(parseResult).ToArray());
             }
 
         }
@@ -44,9 +42,7 @@ namespace NzbDrone.Core.DecisionEngine
                 var generalReasons = GetGeneralRejectionReasons(parseResult);
                 var searchReasons = GetSearchRejectionReasons(parseResult, searchDefinitionBase);
 
-                parseResult.Decision = new DownloadDecision(parseResult, generalReasons.Union(searchReasons).ToArray());
-
-                yield return parseResult.Decision;
+                yield return new DownloadDecision(parseResult, generalReasons.Union(searchReasons).ToArray());
             }
         }
 

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Linq;
+using System;
 using System.Collections.Generic;
-using NzbDrone.Core.DecisionEngine;
+using System.Linq;
 using NzbDrone.Core.Organizer;
 using NzbDrone.Core.Tv;
 
-namespace NzbDrone.Core.Parser
+namespace NzbDrone.Core.Parser.Model
 {
     public class RemoteEpisode
     {
@@ -14,8 +13,6 @@ namespace NzbDrone.Core.Parser
 
         public Series Series { get; set; }
         public List<Episode> Episodes { get; set; }
-
-        public DownloadDecision Decision { get; set; }
 
         public string GetDownloadTitle()
         {
@@ -45,8 +42,8 @@ namespace NzbDrone.Core.Parser
 
             //Show Name - 1x01-1x02 - Episode Name
             //Show Name - 1x01 - Episode Name
-            var episodeString = new List<String>();
-            var episodeNames = new List<String>();
+            var episodeString = new List<string>();
+            var episodeNames = new List<string>();
 
             foreach (var episode in Episodes)
             {
