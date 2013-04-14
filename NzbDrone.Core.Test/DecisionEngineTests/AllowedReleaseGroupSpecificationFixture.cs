@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
+using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
@@ -14,12 +16,12 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
     public class AllowedReleaseGroupSpecificationFixture : CoreTest<AllowedReleaseGroupSpecification>
     {
-        private IndexerParseResult parseResult;
+        private RemoteEpisode parseResult;
 
         [SetUp]
         public void Setup()
         {
-            parseResult = new IndexerParseResult
+            parseResult = new RemoteEpisode
                                     {
                                         SeriesTitle = "Title",
                                         Language = Language.English,

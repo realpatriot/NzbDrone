@@ -8,6 +8,7 @@ using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Providers;
@@ -23,8 +24,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     {
         private CustomStartDateSpecification _customStartDateSpecification;
 
-        private IndexerParseResult parseResultMulti;
-        private IndexerParseResult parseResultSingle;
+        private RemoteEpisode parseResultMulti;
+        private RemoteEpisode parseResultSingle;
         private Series fakeSeries;
         private Episode firstEpisode;
         private Episode secondEpisode;
@@ -42,7 +43,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 .With(c => c.CustomStartDate = null)
                 .Build();
 
-            parseResultMulti = new IndexerParseResult
+            parseResultMulti = new RemoteEpisode
             {
                 SeriesTitle = "Title",
                 Series = fakeSeries,
@@ -51,7 +52,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 Episodes = new List<Episode> { firstEpisode, secondEpisode }
             };
 
-            parseResultSingle = new IndexerParseResult
+            parseResultSingle = new RemoteEpisode
             {
                 SeriesTitle = "Title",
                 Series = fakeSeries,

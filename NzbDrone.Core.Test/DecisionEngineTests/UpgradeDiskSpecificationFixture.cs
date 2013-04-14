@@ -8,6 +8,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
@@ -24,8 +25,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     {
         private UpgradeDiskSpecification _upgradeDisk;
 
-        private IndexerParseResult parseResultMulti;
-        private IndexerParseResult parseResultSingle;
+        private RemoteEpisode parseResultMulti;
+        private RemoteEpisode parseResultSingle;
         private EpisodeFile firstFile;
         private EpisodeFile secondFile;
 
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                          .With(c => c.QualityProfile = new QualityProfile { Cutoff = Quality.Bluray1080p })
                          .Build();
 
-            parseResultMulti = new IndexerParseResult
+            parseResultMulti = new RemoteEpisode
             {
                 Series = fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
@@ -54,7 +55,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 Episodes = doubleEpisodeList
             };
 
-            parseResultSingle = new IndexerParseResult
+            parseResultSingle = new RemoteEpisode
             {
                 Series = fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),

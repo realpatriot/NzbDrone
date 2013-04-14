@@ -114,7 +114,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
                                   {
                                       EpisodeTitle = "Title",
                                       EpisodeNumbers = new List<int> { 5 },
@@ -134,7 +134,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
             {
                 Quality = new QualityModel { Quality = Quality.Bluray720p, Proper = false },
                 AirDate = new DateTime(2011, 12, 01),
@@ -153,7 +153,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
             WithFullQueue();
 
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
             {
                 Quality = new QualityModel { Quality = Quality.Bluray720p, Proper = false },
                 FullSeason = true,
@@ -182,7 +182,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
                                   {
                                       EpisodeTitle = "Title",
                                       EpisodeNumbers = new List<int>(episodes),
@@ -211,7 +211,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
                                   {
                                       EpisodeTitle = "Title",
                                       EpisodeNumbers = new List<int>(episodes),
@@ -238,7 +238,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
             {
                 EpisodeTitle = "Title",
                 EpisodeNumbers = new List<int>(episodes),
@@ -265,7 +265,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithFullQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
             {
                 EpisodeTitle = "Title",
                 EpisodeNumbers = new List<int>(episodes),
@@ -284,7 +284,7 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.SabProviderTests
         {
             WithEmptyQueue();
 
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
             {
                 EpisodeTitle = "Title",
                 EpisodeNumbers = new List<int> { 1 },

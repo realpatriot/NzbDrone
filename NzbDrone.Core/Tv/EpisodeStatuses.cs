@@ -1,6 +1,6 @@
 ﻿namespace NzbDrone.Core.Tv
 {
-    public enum EpisodeStatusType
+    public enum EpisodeStatuses
     {
         /// <summary>
         ///   Episode has not aired yet
@@ -24,7 +24,7 @@
         /// files are available
         /// </summary>
         AirsToday,
-        
+
         /// <summary>
         /// Episode is being downloaded
         /// </summary>

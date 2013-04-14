@@ -355,7 +355,7 @@
     <Compile Include="Qualities\QualitySizeRepository.cs" />
     <Compile Include="Qualities\QualityProfileRepository.cs" />
     <Compile Include="Tv\EpisodeService.cs" />
-    <Compile Include="Tv\EpisodeStatusType.cs" />
+    <Compile Include="Tv\EpisodeStatuses.cs" />
     <Compile Include="Tv\Events\EpisodeInfoUpdatedEvent.cs" />
     <Compile Include="Tv\Events\EpisodeInfoAddedEvent.cs" />
     <Compile Include="Tv\Events\SeriesAddedEvent.cs" />

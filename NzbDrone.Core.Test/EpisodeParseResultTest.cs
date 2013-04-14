@@ -4,6 +4,7 @@ using System.Linq;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
@@ -18,7 +19,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_single_season_episode()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.EpisodeNumbers = new List<int> { 3 };
@@ -33,7 +34,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_single_season_episode_proper()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.EpisodeNumbers = new List<int> { 3 };
@@ -48,7 +49,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_multi_season_episode()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.EpisodeNumbers = new List<int> { 3, 4, 5 };
@@ -63,7 +64,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_multi_season_episode_proper()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.EpisodeNumbers = new List<int> { 3, 4, 5 };
@@ -79,7 +80,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_full_season()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.FullSeason = true;
@@ -94,7 +95,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_full_season_proper()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.FullSeason = true;
@@ -108,7 +109,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_daily_show()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.FullSeason = true;
@@ -122,7 +123,7 @@ namespace NzbDrone.Core.Test
         [Test]
         public void tostring_daily_show_proper()
         {
-            var parseResult = new IndexerParseResult();
+            var parseResult = new RemoteEpisode();
             parseResult.SeriesTitle = "My Series";
             parseResult.SeasonNumber = 12;
             parseResult.FullSeason = true;
@@ -162,7 +163,7 @@ namespace NzbDrone.Core.Test
                     .With(e => e.Title = title)
                     .Build());
 
-            var parsResult = new IndexerParseResult()
+            var parsResult = new RemoteEpisode()
             {
                 AirDate = DateTime.Now,
                 EpisodeNumbers = episodes.ToList(),
@@ -184,7 +185,7 @@ namespace NzbDrone.Core.Test
                                 .With(c => c.Title = "My Series Name")
                                 .Build();
 
-            var parsResult = new IndexerParseResult()
+            var parsResult = new RemoteEpisode()
             {
                 AirDate = DateTime.Now,
                 Quality = new QualityModel(Quality.Bluray720p, proper),
@@ -210,7 +211,7 @@ namespace NzbDrone.Core.Test
                     .With(e => e.Title = "My Episode Title")
                     .Build();
 
-            var parsResult = new IndexerParseResult
+            var parsResult = new RemoteEpisode
             {
                 AirDate = new DateTime(2011, 12, 1),
                 Quality = new QualityModel(Quality.Bluray720p, proper),
@@ -238,7 +239,7 @@ namespace NzbDrone.Core.Test
                     .With(e => e.Title = "My Episode Title (2)")
                     .Build();
 
-            var parsResult = new IndexerParseResult
+            var parsResult = new RemoteEpisode
             {
                 AirDate = DateTime.Now,
                 EpisodeNumbers = new List<int> { 10, 11 },

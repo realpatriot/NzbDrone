@@ -1,18 +1,8 @@
-﻿
-
-using System.Linq;
-using System;
-using System.Collections.Generic;
-using FizzWare.NBuilder;
-using FluentAssertions;
-using Moq;
+﻿using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.DecisionEngine.Specifications;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Providers;
-using NzbDrone.Core.DecisionEngine;
-
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
@@ -23,14 +13,14 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     {
         private RetentionSpecification retentionSpecification;
 
-        private IndexerParseResult parseResult;
+        private RemoteEpisode parseResult;
 
         [SetUp]
         public void Setup()
         {
             retentionSpecification = Mocker.Resolve<RetentionSpecification>();
 
-            parseResult = new IndexerParseResult
+            parseResult = new RemoteEpisode
             {
                 Age = 100
             };

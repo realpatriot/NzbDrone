@@ -7,6 +7,7 @@ using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.History;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
@@ -22,8 +23,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     {
         private UpgradeHistorySpecification _upgradeHistory;
 
-        private IndexerParseResult _parseResultMulti;
-        private IndexerParseResult _parseResultSingle;
+        private RemoteEpisode _parseResultMulti;
+        private RemoteEpisode _parseResultSingle;
         private QualityModel _upgradableQuality;
         private QualityModel _notupgradableQuality;
         private Series _fakeSeries;
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                          .With(c => c.QualityProfile = new QualityProfile { Cutoff = Quality.Bluray1080p })
                          .Build();
 
-            _parseResultMulti = new IndexerParseResult
+            _parseResultMulti = new RemoteEpisode
             {
                 Series = _fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
@@ -54,7 +55,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 Episodes = doubleEpisodeList
             };
 
-            _parseResultSingle = new IndexerParseResult
+            _parseResultSingle = new RemoteEpisode
             {
                 Series = _fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),

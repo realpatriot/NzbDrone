@@ -1,28 +1,24 @@
-﻿
-
-using System.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
+using NzbDrone.Core.Parser;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Providers;
-using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    
+
     public class AcceptableSizeSpecificationFixture : CoreTest
     {
-        private IndexerParseResult parseResultMulti;
-        private IndexerParseResult parseResultSingle;
+        private RemoteEpisode parseResultMulti;
+        private RemoteEpisode parseResultSingle;
         private Series series30minutes;
         private Series series60minutes;
         private QualitySize qualityType;
@@ -30,7 +26,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [SetUp]
         public void Setup()
         {
-            parseResultMulti = new IndexerParseResult
+            parseResultMulti = new RemoteEpisode
                                    {
                                        SeriesTitle = "Title",
                                        Language = Language.English,
@@ -40,7 +36,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                                        AirDate = DateTime.Now.AddDays(-12).Date
                                    };
 
-            parseResultSingle = new IndexerParseResult
+            parseResultSingle = new RemoteEpisode
                                     {
                                         SeriesTitle = "Title",
                                         Language = Language.English,
@@ -81,13 +77,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -102,13 +98,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -123,13 +119,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -144,13 +140,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -165,13 +161,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultMulti);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -186,13 +182,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultMulti);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -207,13 +203,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultMulti);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -228,13 +224,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(false);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultMulti);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -249,13 +245,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -270,13 +266,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -291,13 +287,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -312,13 +308,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeFalse();
         }
 
@@ -334,13 +330,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -356,13 +352,13 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
@@ -379,22 +375,22 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IQualitySizeService>().Setup(s => s.Get(1)).Returns(qualityType);
 
             Mocker.GetMock<IEpisodeService>().Setup(
-                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+                s => s.IsFirstOrLastEpisodeOfSeason(It.IsAny<int>()))
                 .Returns(true);
 
-            
+
             bool result = Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResultSingle);
 
-            
+
             result.Should().BeTrue();
         }
 
         [Test]
         public void should_return_true_if_RAWHD()
         {
-            var parseResult = new IndexerParseResult
+            var parseResult = new RemoteEpisode
                 {
-                        Quality = new QualityModel(Quality.RAWHD, false)
+                    Quality = new QualityModel(Quality.RAWHD, false)
                 };
 
             Mocker.Resolve<AcceptableSizeSpecification>().IsSatisfiedBy(parseResult).Should().BeTrue();

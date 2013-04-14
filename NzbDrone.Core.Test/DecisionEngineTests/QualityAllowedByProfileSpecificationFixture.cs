@@ -6,6 +6,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 using NzbDrone.Core.Model;
@@ -20,7 +21,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     public class QualityAllowedByProfileSpecificationFixture : CoreTest
     {
         private QualityAllowedByProfileSpecification _qualityAllowedByProfile;
-        private IndexerParseResult parseResult;
+        private RemoteEpisode parseResult;
 
         public static object[] AllowedTestCases =
         {
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                          .With(c => c.QualityProfile = new QualityProfile { Cutoff = Quality.Bluray1080p })
                          .Build();
 
-            parseResult = new IndexerParseResult
+            parseResult = new RemoteEpisode
             {
                 Series = fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),

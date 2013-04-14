@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Contract;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
 
@@ -79,12 +80,12 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Portlandia.S03E10.Alexandra.720p.WEB-DL.AAC2.0.H.264-CROM.mkv", "Portlandia", 3, 10)]
         public void ParseTitle_single(string postTitle, string title, int seasonNumber, int episodeNumber)
         {
-            var result = Parser.Parser.ParseTitle<IndexerParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
             result.Should().NotBeNull();
             result.EpisodeNumbers.Should().HaveCount(1);
             result.SeasonNumber.Should().Be(seasonNumber);
             result.EpisodeNumbers.First().Should().Be(episodeNumber);
-            result.CleanTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
+            result.SeriesTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
             result.OriginalString.Should().Be(postTitle);
         }
 
@@ -100,7 +101,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase(@"S:\TV Drop\King of the Hill - 10x12 - 24 Hour Propane People [SDTV]\Hour Propane People.avi", 10, 12)]
         public void PathParse_tests(string path, int season, int episode)
         {
-            var result = Parser.SimpleParser.ParsePath(path);
+            var result = Parser.Parser.ParsePath(path);
             result.EpisodeNumbers.Should().HaveCount(1);
             result.SeasonNumber.Should().Be(season);
             result.EpisodeNumbers[0].Should().Be(episode);
@@ -112,7 +113,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [Test]
         public void unparsable_path_should_report_the_path()
         {
-            Parser.SimpleParser.ParsePath("C:\\").Should().BeNull();
+            Parser.Parser.ParsePath("C:\\").Should().BeNull();
 
             MockedRestProvider.Verify(c => c.PostData(It.IsAny<string>(), It.IsAny<ParseErrorReport>()), Times.Exactly(2));
 

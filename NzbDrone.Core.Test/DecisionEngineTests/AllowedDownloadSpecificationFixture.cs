@@ -5,6 +5,7 @@ using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
@@ -12,7 +13,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     [TestFixture]
     public class AllowedDownloadSpecificationFixture : CoreTest<DownloadDecisionMaker>
     {
-        private List<IndexerParseResult> _parseResults;
+        private List<RemoteEpisode> _parseResults;
 
         private Mock<IDecisionEngineSpecification> _pass1;
         private Mock<IDecisionEngineSpecification> _pass2;
@@ -33,15 +34,15 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _fail2 = new Mock<IDecisionEngineSpecification>();
             _fail3 = new Mock<IDecisionEngineSpecification>();
 
-            _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(true);
-            _pass2.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(true);
-            _pass3.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(true);
+            _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(true);
+            _pass2.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(true);
+            _pass3.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(true);
 
-            _fail1.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(false);
-            _fail2.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(false);
-            _fail3.Setup(c => c.IsSatisfiedBy(It.IsAny<IndexerParseResult>())).Returns(false);
+            _fail1.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(false);
+            _fail2.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(false);
+            _fail3.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(false);
 
-            _parseResults = new List<IndexerParseResult>() { new IndexerParseResult() };
+            _parseResults = new List<RemoteEpisode>() { new RemoteEpisode() };
 
         }
 
