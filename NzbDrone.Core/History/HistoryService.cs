@@ -55,12 +55,12 @@ namespace NzbDrone.Core.History
                 var history = new History
                 {
                     Date = DateTime.Now,
-                    Indexer = message.ParseResult.Indexer,
-                    Quality = message.ParseResult.Quality,
-                    NzbTitle = message.ParseResult.OriginalString,
+                    Indexer = message.ParseResult.Report.Indexer,
+                    Quality = message.ParseResult.ParsedInfo.Quality,
+                    NzbTitle = message.ParseResult.Report.Title,
                     EpisodeId = episode.Id,
-                    NzbInfoUrl = message.ParseResult.NzbInfoUrl,
-                    ReleaseGroup = message.ParseResult.ReleaseGroup,
+                    NzbInfoUrl = message.ParseResult.Report.NzbInfoUrl,
+                    ReleaseGroup = message.ParseResult.Report.ReleaseGroup,
                 };
 
                 _historyRepository.Insert(history);

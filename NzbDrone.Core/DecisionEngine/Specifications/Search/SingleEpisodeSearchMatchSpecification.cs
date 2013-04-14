@@ -1,14 +1,15 @@
+using System.Linq;
 using NLog;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Model;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications.Search
 {
-    public class SingleEpisodeMatchSpecification : IDecisionEngineSearchSpecification
+    public class SingleEpisodeSearchMatchSpecification : IDecisionEngineSearchSpecification
     {
         private readonly Logger _logger;
 
-        public SingleEpisodeMatchSpecification(Logger logger)
+        public SingleEpisodeSearchMatchSpecification(Logger logger)
         {
             _logger = logger;
         }
@@ -26,13 +27,13 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
             var singleEpisodeSpec = searchDefinitionBase as SingleEpisodeSearchDefinition;
             if (singleEpisodeSpec == null) return true;
 
-            if (singleEpisodeSpec.SeasonNumber != indexerParseResult.SeasonNumber)
+            if (singleEpisodeSpec.SeasonNumber != indexerParseResult.ParsedInfo.SeasonNumber)
             {
                 _logger.Trace("Season number does not match searched season number, skipping.");
                 return false;
             }
 
-            if (!indexerParseResult.EpisodeNumbers.Contains(singleEpisodeSpec.EpisodeNumber))
+            if (!indexerParseResult.Episodes.Select(c => c.EpisodeNumber).Contains(singleEpisodeSpec.EpisodeNumber))
             {
                 _logger.Trace("Episode number does not match searched episode number, skipping.");
                 return false;

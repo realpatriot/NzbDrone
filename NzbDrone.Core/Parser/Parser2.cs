@@ -61,6 +61,8 @@ namespace NzbDrone.Core.Parser
     {
         LocalEpisode GetEpisodes(string title);
         Series GetSeries(string title);
+        IndexerParseResult Map(IEnumerable<ReportInfo> indexerParseResult);
+        IndexerParseResult Map(ReportInfo indexerParseResult);
     }
 
     public class ParsingService : IParsingService
@@ -112,6 +114,16 @@ namespace NzbDrone.Core.Parser
         {
             var parseResult = SimpleParser.ParseTitle(title);
             return _seriesService.FindByTitle(parseResult.SeriesTitle);
+        }
+
+        public IndexerParseResult Map(IEnumerable<ReportInfo> indexerParseResult)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IndexerParseResult Map(ReportInfo indexerParseResult)
+        {
+            throw new NotImplementedException();
         }
 
         private List<Episode> GetEpisodesByParseResult(ParsedEpisodeInfo parseResult, Series series)

@@ -10,7 +10,7 @@ namespace NzbDrone.Core.Indexers.FileSharingTalk
             return item.Id;
         }
 
-        protected override IndexerParseResult PostProcessor(SyndicationItem item, IndexerParseResult currentResult)
+        protected override ReportInfo PostProcessor(SyndicationItem item, ReportInfo currentResult)
         {
             if (currentResult != null)
             {

@@ -6,7 +6,7 @@ namespace NzbDrone.Core.Indexers.NzbsRUs
 {
     public class NzbsrusParser : BasicRssParser
     {
-        protected override IndexerParseResult PostProcessor(SyndicationItem item, IndexerParseResult currentResult)
+        protected override ReportInfo PostProcessor(SyndicationItem item, ReportInfo currentResult)
         {
             if (currentResult != null)
             {

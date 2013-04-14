@@ -228,7 +228,7 @@
     <Compile Include="DecisionEngine\Specifications\MonitoredEpisodeSpecification.cs" />
     <Compile Include="DecisionEngine\Specifications\QualityAllowedByProfileSpecification.cs" />
     <Compile Include="DecisionEngine\QualityUpgradableSpecification.cs" />
-    <Compile Include="DecisionEngine\Specifications\Search\SingleEpisodeMatchSpecification.cs" />
+    <Compile Include="DecisionEngine\Specifications\Search\SingleEpisodeSearchMatchSpecification.cs" />
     <Compile Include="DecisionEngine\Specifications\UpgradeDiskSpecification.cs" />
     <Compile Include="DecisionEngine\Specifications\UpgradeHistorySpecification.cs" />
     <Compile Include="Download\Clients\Sabnzbd\ConnectionInfoModel.cs" />

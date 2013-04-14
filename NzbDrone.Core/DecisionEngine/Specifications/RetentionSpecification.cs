@@ -26,10 +26,12 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
         public virtual bool IsSatisfiedBy(IndexerParseResult subject)
         {
-            _logger.Trace("Checking if report meets retention requirements. {0}", subject.Age);
-            if (_configService.Retention > 0 && subject.Age > _configService.Retention)
+            var age = subject.Report.Age;
+
+            _logger.Trace("Checking if report meets retention requirements. {0}", age);
+            if (_configService.Retention > 0 && age > _configService.Retention)
             {
-                _logger.Trace("Report age: {0} rejected by user's retention limit", subject.Age);
+                _logger.Trace("Report age: {0} rejected by user's retention limit", age);
                 return false;
             }
 

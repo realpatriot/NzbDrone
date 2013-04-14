@@ -34,7 +34,7 @@ namespace NzbDrone.Core.Download
 
         public bool DownloadReport(IndexerParseResult parseResult)
         {
-            var downloadTitle = parseResult.OriginalString;
+            var downloadTitle = parseResult.Report.Title;
             if (!_configService.DownloadClientUseSceneName)
             {
                 downloadTitle = parseResult.GetDownloadTitle();
@@ -43,7 +43,7 @@ namespace NzbDrone.Core.Download
             var provider = _downloadClientProvider.GetDownloadClient();
             var recentEpisode = ContainsRecentEpisode(parseResult);
 
-            bool success = provider.DownloadNzb(parseResult.NzbUrl, downloadTitle, recentEpisode);
+            bool success = provider.DownloadNzb(parseResult.Report.NzbUrl, downloadTitle, recentEpisode);
 
             if (success)
             {

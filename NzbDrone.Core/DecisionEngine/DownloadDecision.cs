@@ -22,18 +22,5 @@ namespace NzbDrone.Core.DecisionEngine
             ParseResult = parseResult;
             Rejections = rejections.ToList();
         }
-
-
-        public static IndexerParseResult PickBestReport(IEnumerable<DownloadDecision> downloadDecisions)
-        {
-            var reports = downloadDecisions
-                  .Where(c => c.Approved)
-                  .Select(c => c.ParseResult)
-                  .OrderByDescending(c => c.Quality)
-                  .ThenBy(c => c.EpisodeNumbers.MinOrDefault())
-                  .ThenBy(c => c.Age);
-
-            return reports.SingleOrDefault();
-        }
     }
 }

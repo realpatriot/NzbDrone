@@ -39,21 +39,21 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         {
             var matchingTitle = queue.Where(q => String.Equals(q.SeriesTitle, newParseResult.Series.CleanTitle, StringComparison.InvariantCultureIgnoreCase));
 
-            var matchingTitleWithQuality = matchingTitle.Where(q => q.Quality >= newParseResult.Quality);
+            var matchingTitleWithQuality = matchingTitle.Where(q => q.Quality >= newParseResult.ParsedInfo.Quality);
 
             if (newParseResult.Series.SeriesType == SeriesTypes.Daily)
             {
-                return matchingTitleWithQuality.Any(q => q.AirDate.Value.Date == newParseResult.AirDate.Value.Date);
+                return matchingTitleWithQuality.Any(q => q.AirDate.Value.Date == newParseResult.ParsedInfo.AirDate.Value.Date);
             }
 
-            var matchingSeason = matchingTitleWithQuality.Where(q => q.SeasonNumber == newParseResult.SeasonNumber);
+            var matchingSeason = matchingTitleWithQuality.Where(q => q.SeasonNumber == newParseResult.ParsedInfo.SeasonNumber);
 
-            if (newParseResult.FullSeason)
+            if (newParseResult.ParsedInfo.FullSeason)
             {
                 return matchingSeason.Any();
             }
 
-            return matchingSeason.Any(q => q.EpisodeNumbers != null && q.EpisodeNumbers.Any(e => newParseResult.EpisodeNumbers.Contains(e)));
+            return matchingSeason.Any(q => q.EpisodeNumbers != null && q.EpisodeNumbers.Any(e => newParseResult.ParsedInfo.EpisodeNumbers.Contains(e)));
         }
 
     }

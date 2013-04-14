@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Indexers.Wombles
             return null;
         }
 
-        protected override IndexerParseResult PostProcessor(SyndicationItem item, IndexerParseResult currentResult)
+        protected override ReportInfo PostProcessor(SyndicationItem item, ReportInfo currentResult)
         {
             if (currentResult != null)
             {

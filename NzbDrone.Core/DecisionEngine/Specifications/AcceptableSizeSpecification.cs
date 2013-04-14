@@ -1,3 +1,4 @@
+using System.Linq;
 using NLog;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Qualities;
@@ -27,13 +28,13 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         {
             _logger.Trace("Beginning size check for: {0}", subject);
 
-            if (subject.Quality.Quality == Quality.RAWHD)
+            if (subject.ParsedInfo.Quality.Quality == Quality.RAWHD)
             {
                 _logger.Trace("Raw-HD release found, skipping size check.");
                 return true;
             }
 
-            var qualityType = _qualityTypeProvider.Get((int)subject.Quality.Quality);
+            var qualityType = _qualityTypeProvider.Get((int)subject.ParsedInfo.Quality.Quality);
 
             if (qualityType.MaxSize == 0)
             {
@@ -47,24 +48,19 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             //Multiply maxSize by Series.Runtime
             maxSize = maxSize * series.Runtime;
 
-            //Multiply maxSize by the number of episodes parsed (if EpisodeNumbers is null it will be treated as a single episode)
-            //TODO: is this check really necessary? shouldn't we blowup?
-            if (subject.EpisodeNumbers != null)
-                maxSize = maxSize * subject.EpisodeNumbers.Count;
+            maxSize = maxSize * subject.Episodes.Count;
 
             //Check if there was only one episode parsed
             //and it is the first or last episode of the season
-            if (subject.EpisodeNumbers != null && subject.EpisodeNumbers.Count == 1 &&
-                _episodeService.IsFirstOrLastEpisodeOfSeason(series.Id,
-                subject.SeasonNumber, subject.EpisodeNumbers[0]))
+            if (subject.Episodes.Count == 1 && _episodeService.IsFirstOrLastEpisodeOfSeason(subject.Episodes.Single().Id))
             {
                 maxSize = maxSize * 2;
             }
 
             //If the parsed size is greater than maxSize we don't want it
-            if (subject.Size > maxSize)
+            if (subject.Report.Size > maxSize)
             {
-                _logger.Trace("Item: {0}, Size: {1} is greater than maximum allowed size ({2}), rejecting.", subject, subject.Size, maxSize);
+                _logger.Trace("Item: {0}, Size: {1} is greater than maximum allowed size ({2}), rejecting.", subject, subject.Report.Size, maxSize);
                 return false;
             }
 

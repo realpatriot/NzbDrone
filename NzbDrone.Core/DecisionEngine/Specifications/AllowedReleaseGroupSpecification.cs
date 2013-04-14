@@ -37,16 +37,18 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             if (string.IsNullOrWhiteSpace(allowed))
                 return true;
 
+            var releaseGroup = subject.Report.ReleaseGroup;
+
             foreach (var group in allowed.Trim(',', ' ').Split(','))
             {
-                if (subject.ReleaseGroup.Equals(group.Trim(' '), StringComparison.CurrentCultureIgnoreCase))
+                if (releaseGroup.Equals(group.Trim(' '), StringComparison.CurrentCultureIgnoreCase))
                 {
-                    _logger.Trace("Item: {0}'s release group is wanted: {1}", subject, subject.ReleaseGroup);
+                    _logger.Trace("Item: {0}'s release group is wanted: {1}", subject, releaseGroup);
                     return true;
                 }
             }
 
-            _logger.Trace("Item: {0}'s release group is not wanted: {1}", subject, subject.ReleaseGroup);
+            _logger.Trace("Item: {0}'s release group is not wanted: {1}", subject, releaseGroup);
             return false;
         }
     }

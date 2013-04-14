@@ -3,38 +3,44 @@ using System.Linq;
 using NzbDrone.Core.DecisionEngine.Specifications.Search;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.DecisionEngine
 {
     public interface IMakeDownloadDecision
     {
-        IEnumerable<DownloadDecision> GetRssDecision(IEnumerable<IndexerParseResult> episodeParseResults);
-        IEnumerable<DownloadDecision> GetSearchDecision(IEnumerable<IndexerParseResult> episodeParseResult, SearchDefinitionBase searchDefinitionBase);
+        IEnumerable<DownloadDecision> GetRssDecision(IEnumerable<ReportInfo> reports);
+        IEnumerable<DownloadDecision> GetSearchDecision(IEnumerable<ReportInfo> reports, SearchDefinitionBase searchDefinitionBase);
     }
 
     public class DownloadDecisionMaker : IMakeDownloadDecision
     {
         private readonly IEnumerable<IRejectWithReason> _specifications;
+        private readonly IParsingService _parsingService;
 
-        public DownloadDecisionMaker(IEnumerable<IRejectWithReason> specifications)
+        public DownloadDecisionMaker(IEnumerable<IRejectWithReason> specifications, IParsingService parsingService)
         {
             _specifications = specifications;
+            _parsingService = parsingService;
         }
 
-        public IEnumerable<DownloadDecision> GetRssDecision(IEnumerable<IndexerParseResult> episodeParseResults)
+        public IEnumerable<DownloadDecision> GetRssDecision(IEnumerable<ReportInfo> reports)
         {
-            foreach (var parseResult in episodeParseResults)
+            foreach (var report in reports)
             {
+                var parseResult = _parsingService.Map(report);
+
                 parseResult.Decision = new DownloadDecision(parseResult, GetGeneralRejectionReasons(parseResult).ToArray());
                 yield return parseResult.Decision;
             }
 
         }
 
-        public IEnumerable<DownloadDecision> GetSearchDecision(IEnumerable<IndexerParseResult> episodeParseResults, SearchDefinitionBase searchDefinitionBase)
+        public IEnumerable<DownloadDecision> GetSearchDecision(IEnumerable<ReportInfo> reports, SearchDefinitionBase searchDefinitionBase)
         {
-            foreach (var parseResult in episodeParseResults)
+            foreach (var report in reports)
             {
+                var parseResult = _parsingService.Map(report);
                 var generalReasons = GetGeneralRejectionReasons(parseResult);
                 var searchReasons = GetSearchRejectionReasons(parseResult, searchDefinitionBase);
 
@@ -45,19 +51,19 @@ namespace NzbDrone.Core.DecisionEngine
         }
 
 
-        private IEnumerable<string> GetGeneralRejectionReasons(IndexerParseResult indexerParseResult)
+        private IEnumerable<string> GetGeneralRejectionReasons(IndexerParseResult reportInfo)
         {
             return _specifications
                 .OfType<IDecisionEngineSpecification>()
-                .Where(spec => !spec.IsSatisfiedBy(indexerParseResult))
+                .Where(spec => !spec.IsSatisfiedBy(reportInfo))
                 .Select(spec => spec.RejectionReason);
         }
 
-        private IEnumerable<string> GetSearchRejectionReasons(IndexerParseResult indexerParseResult, SearchDefinitionBase searchDefinitionBase)
+        private IEnumerable<string> GetSearchRejectionReasons(IndexerParseResult reportInfo, SearchDefinitionBase searchDefinitionBase)
         {
             return _specifications
                 .OfType<IDecisionEngineSearchSpecification>()
-                .Where(spec => !spec.IsSatisfiedBy(indexerParseResult, searchDefinitionBase))
+                .Where(spec => !spec.IsSatisfiedBy(reportInfo, searchDefinitionBase))
                 .Select(spec => spec.RejectionReason);
         }
     }

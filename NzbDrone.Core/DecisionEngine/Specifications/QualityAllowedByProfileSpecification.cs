@@ -22,10 +22,10 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
         public virtual bool IsSatisfiedBy(IndexerParseResult subject)
         {
-            _logger.Trace("Checking if report meets quality requirements. {0}", subject.Quality);
-            if (!subject.Series.QualityProfile.Allowed.Contains(subject.Quality.Quality))
+            _logger.Trace("Checking if report meets quality requirements. {0}", subject.ParsedInfo.Quality);
+            if (!subject.Series.QualityProfile.Allowed.Contains(subject.ParsedInfo.Quality.Quality))
             {
-                _logger.Trace("Quality {0} rejected by Series' quality profile", subject.Quality);
+                _logger.Trace("Quality {0} rejected by Series' quality profile", subject.ParsedInfo.Quality);
                 return false;
             }
 
