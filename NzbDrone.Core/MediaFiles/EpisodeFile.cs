@@ -29,5 +29,7 @@ namespace NzbDrone.Core.MediaFiles
         public string ReleaseGroup { get; set; }
 
         public QualityModel Quality { get; set; }
+
+        public LazyList<Episode> Episodes { get; set; }
     }
 }

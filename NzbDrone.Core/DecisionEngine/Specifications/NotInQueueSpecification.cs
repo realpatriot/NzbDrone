@@ -4,6 +4,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
@@ -29,14 +30,14 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         {
             var downloadClient = _downloadClientProvider.GetDownloadClient();
 
-            var queue = downloadClient.GetQueue().Select(q => Parser.Parser.ParseTitle<IndexerParseResult>(q.Title));
+            var queue = downloadClient.GetQueue().Select(q => Parser.SimpleParser.ParseTitle(q.Title));
 
             return !IsInQueue(subject, queue);
         }
 
-        public virtual bool IsInQueue(IndexerParseResult newParseResult, IEnumerable<IndexerParseResult> queue)
+        public virtual bool IsInQueue(IndexerParseResult newParseResult, IEnumerable<ParsedEpisodeInfo> queue)
         {
-            var matchingTitle = queue.Where(q => String.Equals(q.CleanTitle, newParseResult.Series.CleanTitle, StringComparison.InvariantCultureIgnoreCase));
+            var matchingTitle = queue.Where(q => String.Equals(q.SeriesTitle, newParseResult.Series.CleanTitle, StringComparison.InvariantCultureIgnoreCase));
 
             var matchingTitleWithQuality = matchingTitle.Where(q => q.Quality >= newParseResult.Quality);
 

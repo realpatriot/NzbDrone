@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Model
         {
             get
             {
-                return Parser.NormalizeTitle(SeriesTitle);
+                return Parser.Parser.NormalizeTitle(SeriesTitle);
             }
         }
 

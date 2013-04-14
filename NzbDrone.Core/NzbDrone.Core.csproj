@@ -308,6 +308,7 @@
     <Compile Include="Lifecycle\ApplicationStartedEvent.cs" />
     <Compile Include="MediaCover\MediaCover.cs" />
     <Compile Include="MediaFiles\EpisodeFileMovingService.cs" />
+    <Compile Include="MediaFiles\Events\EpisodeFileAddedEvent.cs" />
     <Compile Include="MediaFiles\Events\EpisodeFileDeletedEvent.cs" />
     <Compile Include="MediaFiles\GhostFileCleanupService.cs" />
     <Compile Include="MediaFiles\MediaFileRepository.cs" />
@@ -346,6 +347,7 @@
     <Compile Include="Model\MisnamedEpisodeModel.cs" />
     <Compile Include="Organizer\NameSpecification.cs" />
     <Compile Include="Parser\Parser.cs" />
+    <Compile Include="Parser\Parser2.cs" />
     <Compile Include="Qualities\QualitySizeRepository.cs" />
     <Compile Include="Qualities\QualityProfileRepository.cs" />
     <Compile Include="Tv\EpisodeService.cs" />

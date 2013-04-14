@@ -78,14 +78,12 @@ namespace NzbDrone.Core.MediaFiles
             episodeFile.Path = newFile;
             _mediaFileService.Update(episodeFile);
 
-            var parseResult = Parser.Parser.ParsePath(episodeFile.Path);
-            parseResult.Series = series;
+            var parseResult = Parser.SimpleParser.ParsePath(episodeFile.Path);
             parseResult.Quality = episodeFile.Quality;
-            parseResult.Episodes = episodes;
 
             if (newDownload)
             {
-                _eventAggregator.Publish(new EpisodeDownloadedEvent(parseResult));
+                _eventAggregator.Publish(new EpisodeDownloadedEvent(parseResult, series));
             }
 
             return episodeFile;

@@ -63,8 +63,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             Mocker.GetMock<IEpisodeService>().Setup(c => c.GetEpisodesByParseResult(parseResultSingle)).Returns(singleEpisodeList);
             Mocker.GetMock<IEpisodeService>().Setup(c => c.GetEpisodesByParseResult(parseResultMulti)).Returns(doubleEpisodeList);
 
-            Mocker.GetMock<ISeriesRepository>().Setup(c => c.GetByTitle(parseResultMulti.CleanTitle)).Returns(fakeSeries);
-            Mocker.GetMock<ISeriesRepository>().Setup(c => c.GetByTitle(parseResultSingle.CleanTitle)).Returns(fakeSeries);
+            Mocker.GetMock<ISeriesRepository>().Setup(c => c.FindByTitle(parseResultMulti.CleanTitle)).Returns(fakeSeries);
+            Mocker.GetMock<ISeriesRepository>().Setup(c => c.FindByTitle(parseResultSingle.CleanTitle)).Returns(fakeSeries);
         }
 
         private void WithFirstEpisodeIgnored()
@@ -97,7 +97,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public void not_in_db_should_be_skipped()
         {
             Mocker.GetMock<ISeriesRepository>()
-                 .Setup(p => p.GetByTitle(It.IsAny<String>()))
+                 .Setup(p => p.FindByTitle(It.IsAny<String>()))
                  .Returns<Series>(null);
 
             monitoredEpisodeSpecification.IsSatisfiedBy(parseResultMulti).Should().BeFalse();

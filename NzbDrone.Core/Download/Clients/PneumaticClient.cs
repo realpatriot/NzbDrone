@@ -34,7 +34,7 @@ namespace NzbDrone.Core.Download.Clients
             try
             {
                 //Todo: Allow full season releases
-                if (Parser.Parser.ParseTitle<ParseResult>(title).FullSeason)
+                if (Parser.SimpleParser.ParseTitle(title).FullSeason)
                 {
                     logger.Info("Skipping Full Season Release: {0}", title);
                     return false;

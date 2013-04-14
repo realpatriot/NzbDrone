@@ -49,13 +49,13 @@ namespace NzbDrone.Core.Providers
                 }
             }
 
-            foreach(var videoFile in _diskScanProvider.GetVideoFiles(dropFolder, false))
+            foreach (var videoFile in _diskScanProvider.GetVideoFiles(dropFolder, false))
             {
                 try
                 {
                     ProcessVideoFile(videoFile);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Logger.ErrorException("An error has occurred while importing video file" + videoFile, ex);
                 }
@@ -76,13 +76,12 @@ namespace NzbDrone.Core.Providers
                 return;
             }
 
-            string seriesName = Parser.Parser.ParseSeriesName(RemoveStatusFromFolderName(subfolderInfo.Name));
-            var series = _seriesRepository.GetByTitle(seriesName);
+            string seriesName = Parser.Parser.ParseSeriesName(subfolderInfo.Name);
+            var series = _seriesRepository.FindByTitle(seriesName);
 
             if (series == null)
             {
                 Logger.Trace("Unknown Series on Import: {0}", subfolderInfo.Name);
-                TagFolder(subfolderInfo, PostDownloadStatusType.UnknownSeries);
                 return;
             }
 
@@ -114,16 +113,14 @@ namespace NzbDrone.Core.Providers
             }
             else
             {
-                if (importedFiles.Count == 0)
+                if (importedFiles.Any())
                 {
                     Logger.Trace("No Imported files: {0}", subfolderInfo.Name);
-                    TagFolder(subfolderInfo, PostDownloadStatusType.ParseError);
                 }
                 else
                 {
                     //Unknown Error Importing (Possibly a lesser quality than episode currently on disk)
                     Logger.Trace("Unable to import series (Unknown): {0}", subfolderInfo.Name);
-                    TagFolder(subfolderInfo, PostDownloadStatusType.Unknown);
                 }
             }
         }
@@ -143,7 +140,7 @@ namespace NzbDrone.Core.Providers
             }
 
             var seriesName = Parser.Parser.ParseSeriesName(Path.GetFileNameWithoutExtension(videoFile));
-            var series = _seriesRepository.GetByTitle(seriesName);
+            var series = _seriesRepository.FindByTitle(seriesName);
 
             if (series == null)
             {
@@ -171,39 +168,6 @@ namespace NzbDrone.Core.Providers
             {
                 _episodeFileMover.MoveEpisodeFile(episodeFile, true);
             }
-        }
-
-        private void TagFolder(DirectoryInfo directory, PostDownloadStatusType status)
-        {
-            //Turning off tagging folder for now, to stop messing people's series folders.
-            return;
-            var target = GetTaggedFolderName(directory, status);
-
-            if (!DiskProvider.PathEquals(target, directory.FullName))
-            {
-                Logger.Warn("Unable to download [{0}]. Status: {1}",directory.Name, status);
-                _diskProvider.MoveDirectory(directory.FullName, target);
-            }
-            else
-            {
-                Logger.Debug("Unable to download [{0}], {1}", directory.Name, status);    
-            }
-        }
-
-        public static string GetTaggedFolderName(DirectoryInfo directoryInfo, PostDownloadStatusType status)
-        {
-            if (status == PostDownloadStatusType.NoError)
-                throw new InvalidOperationException("Can't tag a folder with a None-error status. " + status);
-
-            string cleanName = RemoveStatusFromFolderName(directoryInfo.Name);
-            string newName = string.Format("_{0}_{1}", status, cleanName);
-
-            return Path.Combine(directoryInfo.Parent.FullName, newName);
-        }
-
-        public static string RemoveStatusFromFolderName(string folderName)
-        {
-            return StatusRegex.Replace(folderName, string.Empty);
         }
     }
 }

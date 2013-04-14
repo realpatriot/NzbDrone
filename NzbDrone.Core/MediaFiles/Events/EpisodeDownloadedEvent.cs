@@ -1,15 +1,19 @@
 ﻿using NzbDrone.Common.Eventing;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
+using NzbDrone.Core.Tv;
 
 namespace NzbDrone.Core.MediaFiles.Events
 {
     public class EpisodeDownloadedEvent : IEvent
     {
-        public FileNameParseResult ParseResult { get; private set; }
+        public ParsedEpisodeInfo ParseResult { get; private set; }
+        public Series Series { get; set; }
 
-        public EpisodeDownloadedEvent(FileNameParseResult parseResult)
+        public EpisodeDownloadedEvent(ParsedEpisodeInfo parseResult, Series series)
         {
             ParseResult = parseResult;
+            Series = series;
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,8 +12,173 @@ using NzbDrone.Core.Tv;
 namespace NzbDrone.Core.Parser
 {
 
+    public class ParsedEpisodeInfo
+    {
+        public string SeriesTitle { get; set; }
+        public string OriginalString { get; set; }
+        public string Title { get; set; }
+        public QualityModel Quality { get; set; }
+        public int SeasonNumber { get; set; }
+        public List<int> EpisodeNumbers { get; set; }
+        public DateTime? AirDate { get; set; }
+        public Language Language { get; set; }
+        public SeriesTypes EpisodeType { get; set; }
 
-    public static class Parser
+        public bool FullSeason { get; set; }
+        public bool SceneSource { get; set; }
+
+        public override string ToString()
+        {
+            string episodeString = "[Unknown Episode]";
+
+            if (AirDate != null && EpisodeNumbers == null)
+            {
+                episodeString = string.Format("{0}", AirDate.Value.ToString("yyyy-MM-dd"));
+            }
+            else if (FullSeason)
+            {
+                episodeString = string.Format("Season {0:00}", SeasonNumber);
+            }
+            else if (EpisodeNumbers != null && EpisodeNumbers.Any())
+            {
+                episodeString = string.Format("S{0:00}E{1}", SeasonNumber, String.Join("-", EpisodeNumbers.Select(c => c.ToString("00"))));
+            }
+
+            return string.Format("{0} - {1} {2}", SeriesTitle, episodeString, Quality);
+        }
+    }
+
+    public class LocalEpisode
+    {
+        public ParsedEpisodeInfo ParsedEpisodeInfo { get; set; }
+        public List<Episode> Episodes { get; set; }
+        public Series Series { get; set; }
+    }
+
+
+
+    public interface IEpisodeMappingService
+    {
+        LocalEpisode GetEpisodes(string title);
+    }
+
+    public class EpisodeMappingService : IEpisodeMappingService
+    {
+        private readonly IEpisodeService _episodeService;
+        private readonly ISeriesService _seriesService;
+        private readonly Logger _logger;
+
+        public EpisodeMappingService(IEpisodeService episodeService, ISeriesService seriesService, Logger logger)
+        {
+            _episodeService = episodeService;
+            _seriesService = seriesService;
+            _logger = logger;
+        }
+
+
+        public LocalEpisode GetEpisodes(string title)
+        {
+            var parseResult = SimpleParser.ParseTitle(title);
+
+            if (parseResult == null)
+            {
+                return null;
+            }
+
+            var series = _seriesService.FindByTitle(parseResult.Title);
+
+            if (series == null)
+            {
+                return null;
+            }
+
+            var episodes = GetEpisodesByParseResult(parseResult, series);
+
+            if (!episodes.Any())
+            {
+                return null;
+            }
+
+            return new LocalEpisode
+                {
+                    ParsedEpisodeInfo = parseResult,
+                    Series = series,
+                    Episodes = episodes
+                };
+        }
+
+        private List<Episode> GetEpisodesByParseResult(ParsedEpisodeInfo parseResult, Series series)
+        {
+            var result = new List<Episode>();
+
+            if (parseResult.AirDate.HasValue)
+            {
+                if (series.SeriesType == SeriesTypes.Standard)
+                {
+                    //Todo: Collect this as a Series we want to treat as a daily series, or possible parsing error
+                    _logger.Warn("Found daily-style episode for non-daily series: {0}. {1}", series.Title, parseResult.OriginalString);
+                    return new List<Episode>();
+                }
+
+                var episodeInfo = _episodeService.GetEpisode(series.Id, parseResult.AirDate.Value);
+
+                if (episodeInfo != null)
+                {
+                    result.Add(episodeInfo);
+                }
+
+                return result;
+            }
+
+            if (parseResult.EpisodeNumbers == null)
+                return result;
+
+            foreach (var episodeNumber in parseResult.EpisodeNumbers)
+            {
+                Episode episodeInfo = null;
+
+                if (series.UseSceneNumbering && parseResult.SceneSource)
+                {
+                    episodeInfo = _episodeService.GetEpisode(series.Id, parseResult.SeasonNumber, episodeNumber, true);
+                }
+
+                if (episodeInfo == null)
+                {
+                    episodeInfo = _episodeService.GetEpisode(series.Id, parseResult.SeasonNumber, episodeNumber);
+                    if (episodeInfo == null && parseResult.AirDate != null)
+                    {
+                        episodeInfo = _episodeService.GetEpisode(series.Id, parseResult.AirDate.Value);
+                    }
+                }
+
+                if (episodeInfo != null)
+                {
+                    result.Add(episodeInfo);
+
+                    if (series.UseSceneNumbering)
+                    {
+                        _logger.Info("Using Scene to TVDB Mapping for: {0} - Scene: {1}x{2:00} - TVDB: {3}x{4:00}",
+                                    series.Title,
+                                    episodeInfo.SceneSeasonNumber,
+                                    episodeInfo.SceneEpisodeNumber,
+                                    episodeInfo.SeasonNumber,
+                                    episodeInfo.EpisodeNumber);
+                    }
+                }
+                else
+                {
+                    _logger.Debug("Unable to find {0}", parseResult);
+                }
+            }
+
+            return result;
+        }
+    }
+
+
+
+
+    public static class SimpleParser
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -79,7 +244,31 @@ namespace NzbDrone.Core.Parser
 
         private static readonly Regex LanguageRegex = new Regex(@"(?:\W|_)(?<italian>ita|italian)|(?<german>german\b)|(?<flemish>flemish)|(?<greek>greek)(?:\W|_)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        public static T ParseTitle<T>(string title) where T : ParseResult, new()
+        public static ParsedEpisodeInfo ParsePath(string path)
+        {
+            var fileInfo = new FileInfo(path);
+
+            var result = ParseTitle(fileInfo.Name);
+
+            if (result == null)
+            {
+                Logger.Trace("Attempting to parse episode info using full path. {0}", fileInfo.FullName);
+                result = ParseTitle(fileInfo.FullName);
+            }
+
+            if (result != null)
+            {
+                result.OriginalString = path;
+            }
+            else
+            {
+                Logger.Warn("Unable to parse episode info from path {0}", path);
+            }
+
+            return result;
+        }
+
+        public static ParsedEpisodeInfo ParseTitle(string title)
         {
             try
             {
@@ -92,7 +281,7 @@ namespace NzbDrone.Core.Parser
 
                     if (match.Count != 0)
                     {
-                        var result = ParseMatchCollection<T>(match);
+                        var result = ParseMatchCollection(match);
                         if (result != null)
                         {
                             //Check if episode is in the future (most likley a parse error)
@@ -118,14 +307,14 @@ namespace NzbDrone.Core.Parser
             return null;
         }
 
-        private static T ParseMatchCollection<T>(MatchCollection matchCollection) where T : ParseResult, new()
+        private static ParsedEpisodeInfo ParseMatchCollection(MatchCollection matchCollection)
         {
             var seriesName = matchCollection[0].Groups["title"].Value.Replace('.', ' ');
 
             int airYear;
             Int32.TryParse(matchCollection[0].Groups["airyear"].Value, out airYear);
 
-            T result;
+            ParsedEpisodeInfo result;
 
             if (airYear < 1900)
             {
@@ -146,7 +335,7 @@ namespace NzbDrone.Core.Parser
                 if (seasons.Distinct().Count() > 1)
                     return null;
 
-                result = new T
+                result = new ParsedEpisodeInfo
                 {
                     SeasonNumber = seasons.First(),
                     EpisodeNumbers = new List<int>()
@@ -189,13 +378,13 @@ namespace NzbDrone.Core.Parser
                     airmonth = tempDay;
                 }
 
-                result = new T
+                result = new ParsedEpisodeInfo
                 {
                     AirDate = new DateTime(airYear, airmonth, airday).Date,
                 };
             }
 
-            result.SeriesTitle = seriesName;
+            result.SeriesTitle = NormalizeTitle(seriesName);
 
             Logger.Trace("Episode Parsed. {0}", result);
 
@@ -206,12 +395,14 @@ namespace NzbDrone.Core.Parser
         {
             Logger.Trace("Parsing string '{0}'", title);
 
-            var parseResult = ParseTitle<ParseResult>(title);
+            var parseResult = ParseTitle(title);
 
             if (parseResult == null)
+            {
                 return NormalizeTitle(title);
+            }
 
-            return parseResult.CleanTitle;
+            return parseResult.SeriesTitle;
         }
 
         private static QualityModel ParseQuality(string name)
@@ -435,8 +626,6 @@ namespace NzbDrone.Core.Parser
             return Language.English;
         }
 
-
-
         public static string NormalizeTitle(string title)
         {
             long number = 0;
@@ -453,5 +642,8 @@ namespace NzbDrone.Core.Parser
             //this will remove (1),(2) from the end of multi part episodes.
             return MultiPartCleanupRegex.Replace(title, string.Empty).Trim();
         }
+
     }
+
+
 }

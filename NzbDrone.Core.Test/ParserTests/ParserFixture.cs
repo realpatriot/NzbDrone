@@ -88,7 +88,6 @@ namespace NzbDrone.Core.Test.ParserTests
             result.OriginalString.Should().Be(postTitle);
         }
 
-        [Test]
         [TestCase(@"z:\tv shows\battlestar galactica (2003)\Season 3\S03E05 - Collaborators.mkv", 3, 5)]
         [TestCase(@"z:\tv shows\modern marvels\Season 16\S16E03 - The Potato.mkv", 16, 3)]
         [TestCase(@"z:\tv shows\robot chicken\Specials\S00E16 - Dear Consumer - SD TV.avi", 0, 16)]
@@ -101,7 +100,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase(@"S:\TV Drop\King of the Hill - 10x12 - 24 Hour Propane People [SDTV]\Hour Propane People.avi", 10, 12)]
         public void PathParse_tests(string path, int season, int episode)
         {
-            var result = Parser.Parser.ParsePath(path);
+            var result = Parser.SimpleParser.ParsePath(path);
             result.EpisodeNumbers.Should().HaveCount(1);
             result.SeasonNumber.Should().Be(season);
             result.EpisodeNumbers[0].Should().Be(episode);
@@ -113,7 +112,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [Test]
         public void unparsable_path_should_report_the_path()
         {
-            Parser.Parser.ParsePath("C:\\").Should().BeNull();
+            Parser.SimpleParser.ParsePath("C:\\").Should().BeNull();
 
             MockedRestProvider.Verify(c => c.PostData(It.IsAny<string>(), It.IsAny<ParseErrorReport>()), Times.Exactly(2));
 

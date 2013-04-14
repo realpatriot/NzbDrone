@@ -12,6 +12,7 @@ using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Organizer;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Tv.Events;
 
@@ -25,6 +26,7 @@ namespace NzbDrone.Core.Tv
         void AddSeries(Series newSeries);
         void UpdateFromSeriesEditor(IList<Series> editedSeries);
         Series FindByTvdbId(int tvdbId);
+        Series FindByTitle(string title);
         void SetSeriesType(int seriesId, SeriesTypes seriesTypes);
         void DeleteSeries(int seriesId, bool deleteFiles);
         List<Series> GetAllSeries();
@@ -93,7 +95,7 @@ namespace NzbDrone.Core.Tv
         {
             Ensure.That(() => newSeries).IsNotNull();
 
-            if(String.IsNullOrWhiteSpace(newSeries.FolderName))
+            if (String.IsNullOrWhiteSpace(newSeries.FolderName))
             {
                 newSeries.FolderName = FileNameBuilder.CleanFilename(newSeries.Title);
                 _diskProvider.CreateDirectory(Path.Combine(_rootFolderService.Get(newSeries.RootFolderId).Path, newSeries.FolderName));
@@ -141,6 +143,11 @@ namespace NzbDrone.Core.Tv
         public Series FindByTvdbId(int tvdbId)
         {
             return _seriesRepository.FindByTvdbId(tvdbId);
+        }
+
+        public Series FindByTitle(string title)
+        {
+            return _seriesRepository.FindByTitle(SimpleParser.NormalizeTitle(title));
         }
 
         public void SetSeriesType(int seriesId, SeriesTypes seriesTypes)

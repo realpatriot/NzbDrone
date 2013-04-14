@@ -35,15 +35,7 @@ namespace NzbDrone.Core.Tv
             get { return EpisodeFile != null; }
         }
 
-        public int EpisodeFileId
-        {
-            get
-            {
-                if (!HasFile) return 0;
-                return EpisodeFile.Id;
-            }
-        }
-
+        public int EpisodeFileId { get; set; }
 
 
         public EpisodeStatusType Status

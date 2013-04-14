@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Tv
     public interface IEpisodeService
     {
         Episode GetEpisode(int id);
-        Episode GetEpisode(int seriesId, int seasonNumber, int episodeNumber);
+        Episode GetEpisode(int seriesId, int seasonNumber, int episodeNumber, bool useScene = false);
         Episode GetEpisode(int seriesId, DateTime date);
         List<Episode> GetEpisodeBySeries(int seriesId);
         List<Episode> GetEpisodesBySeason(int seriesId, int seasonNumber);
@@ -36,7 +36,8 @@ namespace NzbDrone.Core.Tv
     public class EpisodeService : IEpisodeService,
         IHandle<EpisodeGrabbedEvent>,
         IHandle<EpisodeFileDeletedEvent>,
-        IHandleAsync<SeriesDeletedEvent>,
+        IHandle<EpisodeFileAddedEvent>,
+    IHandleAsync<SeriesDeletedEvent>,
         IHandleAsync<SeriesAddedEvent>
     {
 
@@ -65,8 +66,12 @@ namespace NzbDrone.Core.Tv
             return _episodeRepository.Get(id);
         }
 
-        public Episode GetEpisode(int seriesId, int seasonNumber, int episodeNumber)
+        public Episode GetEpisode(int seriesId, int seasonNumber, int episodeNumber, bool useSceneNumbering = false)
         {
+            if (useSceneNumbering)
+            {
+                return _episodeRepository.GetEpisodeBySceneNumbering(seriesId, seasonNumber, episodeNumber);
+            }
             return _episodeRepository.Get(seriesId, seasonNumber, episodeNumber);
         }
 
@@ -393,6 +398,16 @@ namespace NzbDrone.Core.Tv
         public void HandleAsync(SeriesAddedEvent message)
         {
             RefreshEpisodeInfo(message.Series);
+        }
+
+        public void Handle(EpisodeFileAddedEvent message)
+        {
+            foreach (var episode in message.EpisodeFile.Episodes.Value)
+            {
+                _episodeRepository.SetFileId(episode.Id, message.EpisodeFile.Id);
+                _episodeRepository.SetPostDownloadStatus(episode.Id, PostDownloadStatusType.NoError);
+                _logger.Debug("Linking [{0}] > [{1}]", message.EpisodeFile.Path, episode);
+            }
         }
     }
 }
