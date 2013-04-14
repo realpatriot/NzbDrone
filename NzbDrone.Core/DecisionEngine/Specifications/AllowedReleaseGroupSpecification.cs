@@ -2,6 +2,7 @@ using System;
 using NLog;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
 {
@@ -25,7 +26,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             }
         }
 
-        public virtual bool IsSatisfiedBy(IndexerParseResult subject)
+        public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
             _logger.Trace("Beginning release group check for: {0}", subject);
 

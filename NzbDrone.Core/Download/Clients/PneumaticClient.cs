@@ -10,6 +10,7 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Organizer;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Download.Clients
 {
@@ -34,7 +35,7 @@ namespace NzbDrone.Core.Download.Clients
             try
             {
                 //Todo: Allow full season releases
-                if (Parser.SimpleParser.ParseTitle(title).FullSeason)
+                if (Parser.Parser.ParseTitle(title).FullSeason)
                 {
                     logger.Info("Skipping Full Season Release: {0}", title);
                     return false;
@@ -74,7 +75,7 @@ namespace NzbDrone.Core.Download.Clients
             return new QueueItem[0];
         }
 
-        public virtual bool IsInQueue(IndexerParseResult newParseResult)
+        public virtual bool IsInQueue(RemoteEpisode newEpisode)
         {
             return false;
         }

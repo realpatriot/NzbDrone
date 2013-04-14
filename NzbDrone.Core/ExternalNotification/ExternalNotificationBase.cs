@@ -83,7 +83,7 @@ namespace NzbDrone.Core.ExternalNotification
                 try
                 {
                     _logger.Trace("Sending grab notification to {0}", Name);
-                    OnGrab(message.ParseResult.GetDownloadTitle());
+                    OnGrab(message.Episode.GetDownloadTitle());
 
                 }
                 catch (Exception e)

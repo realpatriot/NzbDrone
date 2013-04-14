@@ -2,6 +2,7 @@ using System;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Indexers.NzbIndex
 {

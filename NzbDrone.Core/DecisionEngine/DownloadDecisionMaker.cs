@@ -51,19 +51,19 @@ namespace NzbDrone.Core.DecisionEngine
         }
 
 
-        private IEnumerable<string> GetGeneralRejectionReasons(IndexerParseResult reportInfo)
+        private IEnumerable<string> GetGeneralRejectionReasons(RemoteEpisode report)
         {
             return _specifications
                 .OfType<IDecisionEngineSpecification>()
-                .Where(spec => !spec.IsSatisfiedBy(reportInfo))
+                .Where(spec => !spec.IsSatisfiedBy(report))
                 .Select(spec => spec.RejectionReason);
         }
 
-        private IEnumerable<string> GetSearchRejectionReasons(IndexerParseResult reportInfo, SearchDefinitionBase searchDefinitionBase)
+        private IEnumerable<string> GetSearchRejectionReasons(RemoteEpisode report, SearchDefinitionBase searchDefinitionBase)
         {
             return _specifications
                 .OfType<IDecisionEngineSearchSpecification>()
-                .Where(spec => !spec.IsSatisfiedBy(reportInfo, searchDefinitionBase))
+                .Where(spec => !spec.IsSatisfiedBy(report, searchDefinitionBase))
                 .Select(spec => spec.RejectionReason);
         }
     }

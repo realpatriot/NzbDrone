@@ -26,34 +26,34 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             }
         }
 
-        public virtual bool IsSatisfiedBy(IndexerParseResult subject)
+        public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
             var downloadClient = _downloadClientProvider.GetDownloadClient();
 
-            var queue = downloadClient.GetQueue().Select(q => Parser.SimpleParser.ParseTitle(q.Title));
+            var queue = downloadClient.GetQueue().Select(q => Parser.Parser.ParseTitle(q.Title));
 
             return !IsInQueue(subject, queue);
         }
 
-        public virtual bool IsInQueue(IndexerParseResult newParseResult, IEnumerable<ParsedEpisodeInfo> queue)
+        public virtual bool IsInQueue(RemoteEpisode newEpisode, IEnumerable<ParsedEpisodeInfo> queue)
         {
-            var matchingTitle = queue.Where(q => String.Equals(q.SeriesTitle, newParseResult.Series.CleanTitle, StringComparison.InvariantCultureIgnoreCase));
+            var matchingTitle = queue.Where(q => String.Equals(q.SeriesTitle, newEpisode.Series.CleanTitle, StringComparison.InvariantCultureIgnoreCase));
 
-            var matchingTitleWithQuality = matchingTitle.Where(q => q.Quality >= newParseResult.ParsedInfo.Quality);
+            var matchingTitleWithQuality = matchingTitle.Where(q => q.Quality >= newEpisode.ParsedInfo.Quality);
 
-            if (newParseResult.Series.SeriesType == SeriesTypes.Daily)
+            if (newEpisode.Series.SeriesType == SeriesTypes.Daily)
             {
-                return matchingTitleWithQuality.Any(q => q.AirDate.Value.Date == newParseResult.ParsedInfo.AirDate.Value.Date);
+                return matchingTitleWithQuality.Any(q => q.AirDate.Value.Date == newEpisode.ParsedInfo.AirDate.Value.Date);
             }
 
-            var matchingSeason = matchingTitleWithQuality.Where(q => q.SeasonNumber == newParseResult.ParsedInfo.SeasonNumber);
+            var matchingSeason = matchingTitleWithQuality.Where(q => q.SeasonNumber == newEpisode.ParsedInfo.SeasonNumber);
 
-            if (newParseResult.ParsedInfo.FullSeason)
+            if (newEpisode.ParsedInfo.FullSeason)
             {
                 return matchingSeason.Any();
             }
 
-            return matchingSeason.Any(q => q.EpisodeNumbers != null && q.EpisodeNumbers.Any(e => newParseResult.ParsedInfo.EpisodeNumbers.Contains(e)));
+            return matchingSeason.Any(q => q.EpisodeNumbers != null && q.EpisodeNumbers.Any(e => newEpisode.ParsedInfo.EpisodeNumbers.Contains(e)));
         }
 
     }

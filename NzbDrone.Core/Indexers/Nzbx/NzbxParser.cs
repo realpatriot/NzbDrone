@@ -4,6 +4,7 @@ using System.IO;
 using NLog;
 using Newtonsoft.Json;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Indexers.Nzbx
 {

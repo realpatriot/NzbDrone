@@ -1,6 +1,7 @@
 using NLog;
 using NzbDrone.Core.History;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
 {
@@ -25,7 +26,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             }
         }
 
-        public virtual bool IsSatisfiedBy(IndexerParseResult subject)
+        public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
             foreach (var episode in subject.Episodes)
             {

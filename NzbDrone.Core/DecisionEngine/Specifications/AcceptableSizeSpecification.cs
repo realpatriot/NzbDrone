@@ -1,6 +1,7 @@
 using System.Linq;
 using NLog;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
 
@@ -24,7 +25,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             get { return "File size too big or small"; }
         }
 
-        public virtual bool IsSatisfiedBy(IndexerParseResult subject)
+        public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
             _logger.Trace("Beginning size check for: {0}", subject);
 

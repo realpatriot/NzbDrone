@@ -286,7 +286,7 @@ namespace NzbDrone.Core.Tv
 
         public void Handle(EpisodeGrabbedEvent message)
         {
-            foreach (var episode in message.ParseResult.Episodes)
+            foreach (var episode in message.Episode.Episodes)
             {
                 logger.Trace("Marking episode {0} as fetched.", episode.Id);
                 episode.GrabDate = DateTime.UtcNow;

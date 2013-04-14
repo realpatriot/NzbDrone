@@ -50,17 +50,17 @@ namespace NzbDrone.Core.History
 
         public void Handle(EpisodeGrabbedEvent message)
         {
-            foreach (var episode in message.ParseResult.Episodes)
+            foreach (var episode in message.Episode.Episodes)
             {
                 var history = new History
                 {
                     Date = DateTime.Now,
-                    Indexer = message.ParseResult.Report.Indexer,
-                    Quality = message.ParseResult.ParsedInfo.Quality,
-                    NzbTitle = message.ParseResult.Report.Title,
+                    Indexer = message.Episode.Report.Indexer,
+                    Quality = message.Episode.ParsedInfo.Quality,
+                    NzbTitle = message.Episode.Report.Title,
                     EpisodeId = episode.Id,
-                    NzbInfoUrl = message.ParseResult.Report.NzbInfoUrl,
-                    ReleaseGroup = message.ParseResult.Report.ReleaseGroup,
+                    NzbInfoUrl = message.Episode.Report.NzbInfoUrl,
+                    ReleaseGroup = message.Episode.Report.ReleaseGroup,
                 };
 
                 _historyRepository.Insert(history);

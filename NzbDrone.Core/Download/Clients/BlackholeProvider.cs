@@ -6,6 +6,7 @@ using NzbDrone.Common;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Model;
 using NzbDrone.Core.Organizer;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Download.Clients
 {
@@ -27,7 +28,7 @@ namespace NzbDrone.Core.Download.Clients
         }
 
 
-        public bool IsInQueue(IndexerParseResult newParseResult)
+        public bool IsInQueue(RemoteEpisode newEpisode)
         {
             throw new NotImplementedException();
         }

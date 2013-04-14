@@ -1,5 +1,6 @@
 ﻿using System.ServiceModel.Syndication;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Indexers.Wombles
 {

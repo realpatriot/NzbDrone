@@ -6,6 +6,7 @@ using NLog;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Indexers
 {
@@ -40,7 +41,7 @@ namespace NzbDrone.Core.Indexers
 
             var qualifiedReports = decisions
                          .Where(c => c.Approved)
-                         .Select(c => c.ParseResult)
+                         .Select(c => c.Episode)
                          .OrderByDescending(c => c.ParsedInfo.Quality)
                          .ThenBy(c => c.Episodes.Select(e => e.EpisodeNumber).MinOrDefault())
                          .ThenBy(c => c.Report.Age);

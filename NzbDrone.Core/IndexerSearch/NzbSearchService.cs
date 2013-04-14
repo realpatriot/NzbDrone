@@ -7,6 +7,7 @@ using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Tv;
 using System.Linq;
 

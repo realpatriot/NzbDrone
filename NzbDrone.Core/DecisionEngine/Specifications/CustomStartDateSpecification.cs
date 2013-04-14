@@ -1,6 +1,7 @@
 using System.Linq;
 using NLog;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
 {
@@ -22,7 +23,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
         }
 
 
-        public virtual bool IsSatisfiedBy(IndexerParseResult subject)
+        public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
             if (!subject.Series.CustomStartDate.HasValue)
             {

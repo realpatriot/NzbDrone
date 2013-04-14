@@ -1,15 +1,16 @@
 ﻿using NzbDrone.Common.Eventing;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.Download
 {
     public class EpisodeGrabbedEvent : IEvent
     {
-        public IndexerParseResult ParseResult { get; private set; }
+        public RemoteEpisode Episode { get; private set; }
 
-        public EpisodeGrabbedEvent(IndexerParseResult parseResult)
+        public EpisodeGrabbedEvent(RemoteEpisode episode)
         {
-            ParseResult = parseResult;
+            Episode = episode;
         }
     }
 }

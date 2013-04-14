@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.DecisionEngine
 {
     public class DownloadDecision
     {
-        public IndexerParseResult ParseResult { get; private set; }
+        public RemoteEpisode Episode { get; private set; }
         public IEnumerable<string> Rejections { get; private set; }
 
         public bool Approved
@@ -17,9 +18,9 @@ namespace NzbDrone.Core.DecisionEngine
             }
         }
 
-        public DownloadDecision(IndexerParseResult parseResult, params string[] rejections)
+        public DownloadDecision(RemoteEpisode episode, params string[] rejections)
         {
-            ParseResult = parseResult;
+            Episode = episode;
             Rejections = rejections.ToList();
         }
     }

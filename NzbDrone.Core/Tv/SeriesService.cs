@@ -147,7 +147,7 @@ namespace NzbDrone.Core.Tv
 
         public Series FindByTitle(string title)
         {
-            return _seriesRepository.FindByTitle(SimpleParser.NormalizeTitle(title));
+            return _seriesRepository.FindByTitle(Parser.Parser.NormalizeTitle(title));
         }
 
         public void SetSeriesType(int seriesId, SeriesTypes seriesTypes)
