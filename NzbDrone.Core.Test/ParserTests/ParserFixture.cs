@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Contract;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Model;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -125,7 +126,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             const string TITLE = "SOMETHING";
 
-            Parser.Parser.ParseTitle<ParseResult>(TITLE).Should().BeNull();
+            Parser.Parser.ParseTitle(TITLE).Should().BeNull();
 
             MockedRestProvider.Verify(c => c.PostData(It.IsAny<string>(), It.Is<ParseErrorReport>(r => r.Title == TITLE)), Times.Once());
 
@@ -153,10 +154,10 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Hell.on.Wheels.S02E09-E10.720p.HDTV.x264-EVOLVE", "Hell on Wheels", 2, new[] { 9, 10 })]
         public void TitleParse_multi(string postTitle, string title, int season, int[] episodes)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);
             result.EpisodeNumbers.Should().BeEquivalentTo(episodes);
-            result.CleanTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
+            result.SeriesTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
             result.OriginalString.Should().Be(postTitle);
         }
 
@@ -173,10 +174,10 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("2020.NZ.2011.12.02.PDTV.XviD-C4TV", "2020nz", 2011, 12, 2)]
         public void parse_daily_episodes(string postTitle, string title, int year, int month, int day)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
             var airDate = new DateTime(year, month, day);
             result.Should().NotBeNull();
-            result.CleanTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
+            result.SeriesTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
             result.AirDate.Should().Be(airDate);
             result.EpisodeNumbers.Should().BeNull();
             result.OriginalString.Should().Be(postTitle);
@@ -187,7 +188,7 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             var title = string.Format("{0:yyyy.MM.dd} - Denis Leary - HD TV.mkv", DateTime.Now.AddDays(2));
 
-            Parser.Parser.ParseTitle<ParseResult>(title).Should().BeNull();
+            Parser.Parser.ParseTitle(title).Should().BeNull();
         }
 
 
@@ -198,9 +199,9 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Adventure Time S02 720p HDTV x264 CRON", "Adventure Time", 2)]
         public void full_season_release_parse(string postTitle, string title, int season)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
             result.SeasonNumber.Should().Be(season);
-            result.CleanTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
+            result.SeriesTitle.Should().Be(Parser.Parser.NormalizeTitle(title));
             result.EpisodeNumbers.Count.Should().Be(0);
             result.FullSeason.Should().BeTrue();
             result.OriginalString.Should().Be(postTitle);
@@ -326,7 +327,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Burn.Notice.S04E15.Brotherly.Love.GERMAN.DUBBED.WS.WEBRiP.XviD.REPACK-TVP", Language.German)]
         public void parse_language(string postTitle, Language language)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
             result.Language.Should().Be(language);
         }
 
@@ -339,9 +340,9 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Doctor Who Confidential   Season 3", "Doctor Who Confidential", 3)]
         public void parse_season_info(string postTitle, string seriesName, int seasonNumber)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
 
-            result.CleanTitle.Should().Be(Parser.Parser.NormalizeTitle(seriesName));
+            result.SeriesTitle.Should().Be(Parser.Parser.NormalizeTitle(seriesName));
             result.SeasonNumber.Should().Be(seasonNumber);
             result.FullSeason.Should().BeTrue();
             result.OriginalString.Should().Be(postTitle);
@@ -352,7 +353,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Instant Star S03 EXTRAS DVDRip XviD OSiTV")]
         public void parse_season_extras(string postTitle)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
 
             result.Should().BeNull();
         }
@@ -362,7 +363,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("CSI.S11.SUBPACK.DVDRip.XviD-REWARD")]
         public void parse_season_subpack(string postTitle)
         {
-            var result = Parser.Parser.ParseTitle<ParseResult>(postTitle);
+            var result = Parser.Parser.ParseTitle(postTitle);
 
             result.Should().BeNull();
         }
@@ -370,7 +371,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("Fussball Bundesliga 10e2011e30 Spieltag FC Bayern Muenchen vs Bayer 04 Leverkusen German WS dTV XviD WoGS")]
         public void unparsable_should_log_error_but_not_throw(string title)
         {
-            Parser.Parser.ParseTitle<ParseResult>(title);
+            Parser.Parser.ParseTitle(title);
             ExceptionVerification.IgnoreWarns();
             ExceptionVerification.ExpectedErrors(1);
         }
@@ -386,7 +387,7 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("password - \"bdc435cb-93c4-4902-97ea-ca00568c3887.337\" yEnc")]
         public void should_not_parse_encypted_posts(string title)
         {
-            Parser.Parser.ParseTitle<ParseResult>(title).Should().BeNull();
+            Parser.Parser.ParseTitle(title).Should().BeNull();
             ExceptionVerification.IgnoreWarns();
         }
     }

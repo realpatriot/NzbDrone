@@ -9,21 +9,51 @@ namespace NzbDrone.Core.Parser.Model
     public class RemoteEpisode
     {
         public ReportInfo Report { get; set; }
-        public ParsedEpisodeInfo ParsedInfo { get; set; }
+
+        public bool FullSeason { get; set; }
 
         public Series Series { get; set; }
+
         public List<Episode> Episodes { get; set; }
+
+        public QualityModel Quality { get; set; }
+
+        public Language Language { get; set; }
+
+        public int SeasonNumber
+        {
+            get { return Episodes.Select(e => e.SeasonNumber).Distinct().SingleOrDefault(); }
+        }
+
+
+        public DateTime? AirDate
+        {
+            get
+            {
+                return Episodes.Single().AirDate;
+            }
+        }
+
+        public IEnumerable<int> EpisodeNumbers
+        {
+            get
+            {
+                return Episodes.Select(c => c.EpisodeNumber).Distinct();
+            }
+        }
+
+        public long Size { get; set; }
 
         public string GetDownloadTitle()
         {
             var seriesTitle = FileNameBuilder.CleanFilename(Series.Title);
 
             //Handle Full Naming
-            if (ParsedInfo.FullSeason)
+            if (FullSeason)
             {
-                var seasonResult = String.Format("{0} - Season {1} [{2}]", seriesTitle, ParsedInfo.SeasonNumber, ParsedInfo.Quality.Quality);
+                var seasonResult = String.Format("{0} - Season {1} [{2}]", seriesTitle, SeasonNumber, Quality);
 
-                if (ParsedInfo.Quality.Proper)
+                if (Quality.Proper)
                     seasonResult += " [Proper]";
 
                 return seasonResult;
@@ -32,9 +62,9 @@ namespace NzbDrone.Core.Parser.Model
             if (Series.SeriesType == SeriesTypes.Daily)
             {
                 var dailyResult = String.Format("{0} - {1:yyyy-MM-dd} - {2} [{3}]", seriesTitle,
-                                     ParsedInfo.AirDate, Episodes.First().Title, ParsedInfo.Quality.Quality);
+                                     AirDate, Episodes.First().Title, Quality);
 
-                if (ParsedInfo.Quality.Proper)
+                if (Quality.Proper)
                     dailyResult += " [Proper]";
 
                 return dailyResult;
@@ -61,14 +91,20 @@ namespace NzbDrone.Core.Parser.Model
             else
                 episodeName = String.Join(" + ", episodeNames.Distinct());
 
-            var result = String.Format("{0} - {1} - {2} [{3}]", seriesTitle, epNumberString, episodeName, ParsedInfo.Quality.Quality);
+            var result = String.Format("{0} - {1} - {2} [{3}]", seriesTitle, epNumberString, episodeName, Quality);
 
-            if (ParsedInfo.Quality.Proper)
+            if (Quality.Proper)
             {
                 result += " [Proper]";
             }
 
             return result;
+        }
+
+
+        public override string ToString()
+        {
+            throw new NotImplementedException();
         }
     }
 }

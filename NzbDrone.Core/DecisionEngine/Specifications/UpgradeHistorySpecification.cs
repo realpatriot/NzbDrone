@@ -1,7 +1,5 @@
 using NLog;
 using NzbDrone.Core.History;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
@@ -35,7 +33,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 if (bestQualityInHistory != null)
                 {
                     _logger.Trace("Comparing history quality with report. History is {0}", bestQualityInHistory);
-                    if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.QualityProfile, bestQualityInHistory, subject.ParsedInfo.Quality))
+                    if (!_qualityUpgradableSpecification.IsUpgradable(subject.Series.QualityProfile, bestQualityInHistory, subject.Quality))
                         return false;
                 }
             }

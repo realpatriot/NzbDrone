@@ -33,7 +33,6 @@ namespace NzbDrone.Core.Test.Download
             _parseResult = Builder<RemoteEpisode>.CreateNew()
                    .With(c => c.Quality = new QualityModel(Quality.DVD, false))
                    .With(c => c.Series = Builder<Series>.CreateNew().Build())
-                   .With(c => c.EpisodeNumbers = new List<int> { 2 })
                    .With(c => c.Episodes = episodes)
                    .Build();
         }

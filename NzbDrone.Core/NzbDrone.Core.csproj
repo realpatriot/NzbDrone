@@ -387,7 +387,7 @@
     <Compile Include="Model\Xem\XemValues.cs" />
     <Compile Include="MediaCover\MediaCoverService.cs" />
     <Compile Include="Download\Clients\Nzbget\NzbgetClient.cs" />
-    <Compile Include="Providers\MediaInfoProvider.cs" />
+    <Compile Include="Providers\VideoFileInfoReader.cs" />
     <Compile Include="Download\Clients\PneumaticClient.cs" />
     <Compile Include="Providers\RecycleBinProvider.cs" />
     <Compile Include="Tv\SeasonService.cs" />

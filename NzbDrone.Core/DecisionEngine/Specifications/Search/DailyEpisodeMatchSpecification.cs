@@ -33,7 +33,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.Search
 
             var episode = _episodeService.GetEpisode(dailySearchSpec.SeriesId, dailySearchSpec.Airtime);
 
-            if (!remoteEpisode.ParsedInfo.AirDate.HasValue || remoteEpisode.ParsedInfo.AirDate.Value != episode.AirDate.Value)
+            if (!remoteEpisode.AirDate.HasValue || remoteEpisode.AirDate.Value != episode.AirDate.Value)
             {
                 _logger.Trace("Episode AirDate does not match searched episode number, skipping.");
                 return false;

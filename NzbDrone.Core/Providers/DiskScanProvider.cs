@@ -17,19 +17,16 @@ namespace NzbDrone.Core.Providers
         private readonly DiskProvider _diskProvider;
         private readonly ICleanGhostFiles _ghostFileCleaner;
         private readonly IMediaFileService _mediaFileService;
-        private readonly RecycleBinProvider _recycleBinProvider;
-        private readonly MediaInfoProvider _mediaInfoProvider;
+        private readonly IVideoFileInfoReader _videoFileInfoReader;
         private readonly IParsingService _parsingService;
 
-        public DiskScanProvider(DiskProvider diskProvider, ICleanGhostFiles ghostFileCleaner, IMediaFileService mediaFileService,
-                                RecycleBinProvider recycleBinProvider, MediaInfoProvider mediaInfoProvider,
+        public DiskScanProvider(DiskProvider diskProvider, ICleanGhostFiles ghostFileCleaner, IMediaFileService mediaFileService, IVideoFileInfoReader videoFileInfoReader,
             IParsingService parsingService)
         {
             _diskProvider = diskProvider;
             _ghostFileCleaner = ghostFileCleaner;
             _mediaFileService = mediaFileService;
-            _recycleBinProvider = recycleBinProvider;
-            _mediaInfoProvider = mediaInfoProvider;
+            _videoFileInfoReader = videoFileInfoReader;
             _parsingService = parsingService;
         }
 
@@ -64,42 +61,27 @@ namespace NzbDrone.Core.Providers
                 return null;
             }
 
-            var parseResult = _parsingService.GetEpisodes(filePath, series);
+            var parsedEpisode = _parsingService.GetEpisodes(filePath, series);
 
-            if (parseResult == null)
+            if (parsedEpisode == null)
             {
                 return null;
             }
 
             var size = _diskProvider.GetSize(filePath);
-            var runTime = _mediaInfoProvider.GetRunTime(filePath);
 
-            if (series.SeriesType == SeriesTypes.Daily || parseResult.ParsedEpisodeInfo.SeasonNumber > 0)
+            if (series.SeriesType == SeriesTypes.Daily || parsedEpisode.SeasonNumber > 0)
             {
-                if (size < Constants.IgnoreFileSize && runTime < 180)
+                var runTime = _videoFileInfoReader.GetRunTime(filePath);
+                if (size < Constants.IgnoreFileSize && runTime.TotalMinutes < 3)
                 {
                     Logger.Trace("[{0}] appears to be a sample. skipping.", filePath);
                     return null;
                 }
             }
 
-            if (!_diskProvider.IsChildOfPath(filePath, series.Path))
+            if (parsedEpisode.Episodes.Any(e => e.EpisodeFile != null && e.EpisodeFile.Quality >= parsedEpisode.Quality))
             {
-                parseResult.ParsedEpisodeInfo.SceneSource = true;
-            }
-
-
-            //Make sure this file is an upgrade for ALL episodes already on disk
-            if (parseResult.Episodes.All(e => e.EpisodeFile == null || e.EpisodeFile.Quality <= parseResult.ParsedEpisodeInfo.Quality))
-            {
-                Logger.Debug("Deleting the existing file(s) on disk to upgrade to: {0}", filePath);
-                //Do the delete for files where there is already an episode on disk
-                parseResult.Episodes.Where(e => e.EpisodeFile != null).Select(e => e.EpisodeFile.Path).Distinct().ToList().ForEach(p => _recycleBinProvider.DeleteFile(p));
-            }
-
-            else
-            {
-                //Skip this file because its not an upgrade
                 Logger.Trace("This file isn't an upgrade for all episodes. Skipping {0}", filePath);
                 return null;
             }
@@ -109,8 +91,8 @@ namespace NzbDrone.Core.Providers
             episodeFile.SeriesId = series.Id;
             episodeFile.Path = filePath.NormalizePath();
             episodeFile.Size = size;
-            episodeFile.Quality = parseResult.ParsedEpisodeInfo.Quality;
-            episodeFile.SeasonNumber = parseResult.ParsedEpisodeInfo.SeasonNumber;
+            episodeFile.Quality = parsedEpisode.Quality;
+            episodeFile.SeasonNumber = parsedEpisode.SeasonNumber;
             episodeFile.SceneName = Path.GetFileNameWithoutExtension(filePath.NormalizePath());
 
             //Todo: We shouldn't actually import the file until we confirm its the only one we want.

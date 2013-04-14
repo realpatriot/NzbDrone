@@ -152,7 +152,6 @@
     <Compile Include="Configuration\ConfigCachingFixture.cs" />
     <Compile Include="DecisionEngineTests\AllowedReleaseGroupSpecificationFixture.cs" />
     <Compile Include="DecisionEngineTests\CustomStartDateSpecificationFixture.cs" />
-    <Compile Include="ProviderTests\DiskScanProviderTests\CleanUpDropFolderFixture.cs" />
     <Compile Include="ProviderTests\DiskScanProviderTests\GetVideoFilesFixture.cs" />
     <Compile Include="ProviderTests\PostDownloadProviderTests\ProcessDropDirectoryFixture.cs" />
     <Compile Include="ProviderTests\PostDownloadProviderTests\ProcessVideoFileFixture.cs" />
@@ -173,7 +172,6 @@
     <Compile Include="ProviderTests\ProwlProviderTest.cs" />
     <Compile Include="ProviderTests\GrowlProviderTest.cs" />
     <Compile Include="ProviderTests\DiskProviderTests\ExtractArchiveFixture.cs" />
-    <Compile Include="ProviderTests\PostDownloadProviderTests\GetFolderNameWithStatusFixture.cs" />
     <Compile Include="ProviderTests\PostDownloadProviderTests\ProcessDownloadFixture.cs" />
     <Compile Include="JobTests\TestJobs.cs" />
     <Compile Include="JobTests\AppUpdateJobFixture.cs" />

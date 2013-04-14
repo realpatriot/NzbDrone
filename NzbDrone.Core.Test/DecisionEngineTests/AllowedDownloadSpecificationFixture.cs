@@ -3,8 +3,8 @@ using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
-using NzbDrone.Core.Model;
 using NzbDrone.Core.DecisionEngine;
+using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Test.Framework;
 
@@ -13,7 +13,8 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
     [TestFixture]
     public class AllowedDownloadSpecificationFixture : CoreTest<DownloadDecisionMaker>
     {
-        private List<RemoteEpisode> _parseResults;
+        private List<ReportInfo> _reports;
+        private RemoteEpisode _remoteEpisode;
 
         private Mock<IDecisionEngineSpecification> _pass1;
         private Mock<IDecisionEngineSpecification> _pass2;
@@ -42,7 +43,11 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _fail2.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(false);
             _fail3.Setup(c => c.IsSatisfiedBy(It.IsAny<RemoteEpisode>())).Returns(false);
 
-            _parseResults = new List<RemoteEpisode>() { new RemoteEpisode() };
+            _reports = new List<ReportInfo>();
+            _remoteEpisode = new RemoteEpisode();
+
+            Mocker.GetMock<IParsingService>().Setup(c => c.Map(It.IsAny<ReportInfo>()))
+                  .Returns(_remoteEpisode);
 
         }
 
@@ -56,14 +61,14 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             GivenSpecifications(_pass1, _pass2, _pass3, _fail1, _fail2, _fail3);
 
-            Subject.GetRssDecision(_parseResults).ToList();
+            Subject.GetRssDecision(_reports).ToList();
 
-            _fail1.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
-            _fail2.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
-            _fail3.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
-            _pass1.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
-            _pass2.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
-            _pass3.Verify(c => c.IsSatisfiedBy(_parseResults[0]), Times.Once());
+            _fail1.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
+            _fail2.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
+            _fail3.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
+            _pass1.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
+            _pass2.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
+            _pass3.Verify(c => c.IsSatisfiedBy(_remoteEpisode), Times.Once());
         }
 
         [Test]
@@ -71,7 +76,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             GivenSpecifications(_pass1, _fail1, _pass2, _pass3);
 
-            var result = Subject.GetRssDecision(_parseResults);
+            var result = Subject.GetRssDecision(_reports);
 
             result.Single().Approved.Should().BeFalse();
         }
@@ -81,7 +86,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             GivenSpecifications(_pass1, _pass2, _pass3);
 
-            var result = Subject.GetRssDecision(_parseResults);
+            var result = Subject.GetRssDecision(_reports);
 
             result.Single().Approved.Should().BeTrue();
         }
@@ -91,19 +96,11 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             GivenSpecifications(_pass1, _pass2, _pass3, _fail1, _fail2, _fail3);
 
-            var result = Subject.GetRssDecision(_parseResults);
+            var result = Subject.GetRssDecision(_reports);
             result.Single().Rejections.Should().HaveCount(3);
         }
 
 
-        [Test]
-        public void parse_result_should_be_attached_to_decision()
-        {
-            GivenSpecifications(_pass1, _pass2, _pass3, _fail1, _fail2, _fail3);
-
-            var result = Subject.GetRssDecision(_parseResults);
-            result.Single().ParseResult.Should().Be(_parseResults.Single());
-        }
 
     }
 }

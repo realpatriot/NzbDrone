@@ -1,7 +1,4 @@
-﻿
-
-using System.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using FizzWare.NBuilder;
 using FluentAssertions;
@@ -10,17 +7,13 @@ using NUnit.Framework;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Providers;
-using NzbDrone.Core.DecisionEngine;
-
 using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    
-    public class MonitoredEpisodeSpecificationFixture : CoreTest
+
+    public class MonitoredEpisodeSpecificationFixture : CoreTest<MonitoredEpisodeSpecification>
     {
         private MonitoredEpisodeSpecification monitoredEpisodeSpecification;
 
@@ -39,33 +32,26 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 .With(c => c.Monitored = true)
                 .Build();
 
+
+            var singleEpisodeList = new List<Episode> { firstEpisode };
+            var doubleEpisodeList = new List<Episode> { firstEpisode, secondEpisode };
+
             parseResultMulti = new RemoteEpisode
             {
-                SeriesTitle = "Title",
                 Series = fakeSeries,
-                EpisodeNumbers = new List<int> { 3, 4 },
-                SeasonNumber = 12,
+                Episodes = doubleEpisodeList
             };
 
             parseResultSingle = new RemoteEpisode
             {
-                SeriesTitle = "Title",
                 Series = fakeSeries,
-                EpisodeNumbers = new List<int> { 3 },
-                SeasonNumber = 12,
+                Episodes = singleEpisodeList
             };
 
             firstEpisode = new Episode { Ignored = false };
             secondEpisode = new Episode { Ignored = false };
 
-            var singleEpisodeList = new List<Episode> { firstEpisode };
-            var doubleEpisodeList = new List<Episode> { firstEpisode, secondEpisode };
 
-            Mocker.GetMock<IEpisodeService>().Setup(c => c.GetEpisodesByParseResult(parseResultSingle)).Returns(singleEpisodeList);
-            Mocker.GetMock<IEpisodeService>().Setup(c => c.GetEpisodesByParseResult(parseResultMulti)).Returns(doubleEpisodeList);
-
-            Mocker.GetMock<ISeriesRepository>().Setup(c => c.FindByTitle(parseResultMulti.CleanTitle)).Returns(fakeSeries);
-            Mocker.GetMock<ISeriesRepository>().Setup(c => c.FindByTitle(parseResultSingle.CleanTitle)).Returns(fakeSeries);
         }
 
         private void WithFirstEpisodeIgnored()

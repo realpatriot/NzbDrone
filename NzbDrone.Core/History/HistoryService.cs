@@ -56,7 +56,7 @@ namespace NzbDrone.Core.History
                 {
                     Date = DateTime.Now,
                     Indexer = message.Episode.Report.Indexer,
-                    Quality = message.Episode.ParsedInfo.Quality,
+                    Quality = message.Episode.Quality,
                     NzbTitle = message.Episode.Report.Title,
                     EpisodeId = episode.Id,
                     NzbInfoUrl = message.Episode.Report.NzbInfoUrl,

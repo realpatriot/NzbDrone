@@ -30,20 +30,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
         public virtual bool IsSatisfiedBy(RemoteEpisode subject)
         {
-
-            if (subject.Series == null)
-            {
-                _logger.Trace("{0} is not mapped to any series in DB. skipping", subject.Series.Title);
-                return false;
-            }
-
-
             if (!subject.Series.Monitored)
             {
                 _logger.Debug("{0} is present in the DB but not tracked. skipping.", subject.Series.Title);
                 return false;
             }
-
 
             //return monitored if any of the episodes are monitored
             if (subject.Episodes.Any(episode => !episode.Ignored))

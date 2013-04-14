@@ -1,7 +1,4 @@
-﻿
-
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
@@ -10,8 +7,6 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Providers;
 using NzbDrone.Core.DecisionEngine;
 
 using NzbDrone.Core.Test.Framework;
@@ -19,7 +14,7 @@ using NzbDrone.Core.Test.Framework;
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    public class UpgradeHistorySpecificationFixture : CoreTest
+    public class UpgradeHistorySpecificationFixture : CoreTest<UpgradeHistorySpecification>
     {
         private UpgradeHistorySpecification _upgradeHistory;
 
@@ -50,8 +45,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             {
                 Series = _fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
-                EpisodeNumbers = new List<int> { 3, 4 },
-                SeasonNumber = 12,
                 Episodes = doubleEpisodeList
             };
 
@@ -59,8 +52,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             {
                 Series = _fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
-                EpisodeNumbers = new List<int> { 3 },
-                SeasonNumber = 12,
                 Episodes = singleEpisodeList
             };
 

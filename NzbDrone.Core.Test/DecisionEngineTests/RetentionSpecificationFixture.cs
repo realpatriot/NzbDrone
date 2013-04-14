@@ -8,21 +8,21 @@ using NzbDrone.Core.Test.Framework;
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
-    
-    public class RetentionSpecificationFixture : CoreTest
+
+    public class RetentionSpecificationFixture : CoreTest<RetentionSpecification>
     {
-        private RetentionSpecification retentionSpecification;
 
         private RemoteEpisode parseResult;
 
         [SetUp]
         public void Setup()
         {
-            retentionSpecification = Mocker.Resolve<RetentionSpecification>();
-
             parseResult = new RemoteEpisode
             {
-                Age = 100
+                Report = new ReportInfo
+                    {
+                        Age = 100
+                    }
             };
         }
 
@@ -50,35 +50,35 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public void unlimited_retention_should_return_true()
         {
             WithUnlimitedRetention();
-            retentionSpecification.IsSatisfiedBy(parseResult).Should().BeTrue();
+            Subject.IsSatisfiedBy(parseResult).Should().BeTrue();
         }
 
         [Test]
         public void longer_retention_should_return_true()
         {
             WithLongRetention();
-            retentionSpecification.IsSatisfiedBy(parseResult).Should().BeTrue();
+            Subject.IsSatisfiedBy(parseResult).Should().BeTrue();
         }
 
         [Test]
         public void equal_retention_should_return_true()
         {
             WithEqualRetention();
-            retentionSpecification.IsSatisfiedBy(parseResult).Should().BeTrue();
+            Subject.IsSatisfiedBy(parseResult).Should().BeTrue();
         }
 
         [Test]
         public void shorter_retention_should_return_false()
         {
             WithShortRetention();
-            retentionSpecification.IsSatisfiedBy(parseResult).Should().BeFalse();
+            Subject.IsSatisfiedBy(parseResult).Should().BeFalse();
         }
 
         [Test]
         public void zeroDay_report_should_return_true()
         {
             WithUnlimitedRetention();
-            retentionSpecification.IsSatisfiedBy(parseResult).Should().BeTrue();
+            Subject.IsSatisfiedBy(parseResult).Should().BeTrue();
         }
     }
 }

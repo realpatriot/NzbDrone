@@ -46,8 +46,8 @@ namespace NzbDrone.Core.Parser
 
             return new LocalEpisode
                 {
-                    ParsedEpisodeInfo = parseResult,
-                    Episodes = episodes
+                    Quality = parseResult.Quality,
+                    Episodes = episodes,
                 };
         }
 

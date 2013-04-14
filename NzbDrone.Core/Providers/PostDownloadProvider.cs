@@ -58,7 +58,7 @@ namespace NzbDrone.Core.Providers
             }
         }
 
-        public virtual void ProcessDownload(DirectoryInfo subfolderInfo)
+        private void ProcessDownload(DirectoryInfo subfolderInfo)
         {
             var series = _parsingService.GetSeries(subfolderInfo.Name);
 

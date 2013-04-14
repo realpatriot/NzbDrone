@@ -15,7 +15,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
 
-    public class AcceptableSizeSpecificationFixture : CoreTest
+    public class AcceptableSizeSpecificationFixture : CoreTest<AcceptableSizeSpecification>
     {
         private RemoteEpisode parseResultMulti;
         private RemoteEpisode parseResultSingle;
@@ -28,33 +28,22 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             parseResultMulti = new RemoteEpisode
                                    {
-                                       SeriesTitle = "Title",
-                                       Language = Language.English,
                                        Quality = new QualityModel(Quality.SDTV, true),
-                                       EpisodeNumbers = new List<int> { 3, 4 },
-                                       SeasonNumber = 12,
-                                       AirDate = DateTime.Now.AddDays(-12).Date
+                                       Episodes = new List<Episode> { new Episode(), new Episode() }
                                    };
 
             parseResultSingle = new RemoteEpisode
                                     {
-                                        SeriesTitle = "Title",
-                                        Language = Language.English,
                                         Quality = new QualityModel(Quality.SDTV, true),
-                                        EpisodeNumbers = new List<int> { 3 },
-                                        SeasonNumber = 12,
-                                        AirDate = DateTime.Now.AddDays(-12).Date
+                                        Episodes = new List<Episode> { new Episode() }
+
                                     };
 
             series30minutes = Builder<Series>.CreateNew()
-                .With(c => c.Monitored = true)
-                .With(d => d.CleanTitle = parseResultMulti.CleanTitle)
                 .With(c => c.Runtime = 30)
                 .Build();
 
             series60minutes = Builder<Series>.CreateNew()
-                .With(c => c.Monitored = true)
-                .With(d => d.CleanTitle = parseResultMulti.CleanTitle)
                 .With(c => c.Runtime = 60)
                 .Build();
 
@@ -69,8 +58,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [Test]
         public void IsAcceptableSize_true_single_episode_not_first_or_last_30_minute()
         {
-            WithStrictMocker();
-
             parseResultSingle.Series = series30minutes;
             parseResultSingle.Size = 184572800;
 
@@ -90,8 +77,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [Test]
         public void IsAcceptableSize_true_single_episode_not_first_or_last_60_minute()
         {
-            WithStrictMocker();
-
             parseResultSingle.Series = series60minutes;
             parseResultSingle.Size = 368572800;
 
@@ -365,10 +350,11 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         [Test]
         public void IsAcceptableSize_should_treat_daily_series_as_single_episode()
         {
+            
             parseResultSingle.Series = series60minutes;
+            parseResultSingle.Series.SeriesType = SeriesTypes.Daily;
+            
             parseResultSingle.Size = 300.Megabytes();
-            parseResultSingle.AirDate = DateTime.Today;
-            parseResultSingle.EpisodeNumbers = null;
 
             qualityType.MaxSize = (int)600.Megabytes();
 

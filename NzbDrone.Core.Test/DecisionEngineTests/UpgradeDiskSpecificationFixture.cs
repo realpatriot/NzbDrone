@@ -1,8 +1,5 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
@@ -11,8 +8,6 @@ using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Tv;
-using NzbDrone.Core.Model;
-using NzbDrone.Core.Providers;
 using NzbDrone.Core.DecisionEngine;
 
 using NzbDrone.Core.Test.Framework;
@@ -21,7 +16,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 {
     [TestFixture]
 
-    public class UpgradeDiskSpecificationFixture : CoreTest
+    public class UpgradeDiskSpecificationFixture : CoreTest<UpgradeDiskSpecification>
     {
         private UpgradeDiskSpecification _upgradeDisk;
 
@@ -50,8 +45,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             {
                 Series = fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
-                EpisodeNumbers = new List<int> { 3, 4 },
-                SeasonNumber = 12,
                 Episodes = doubleEpisodeList
             };
 
@@ -59,8 +52,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             {
                 Series = fakeSeries,
                 Quality = new QualityModel(Quality.DVD, true),
-                EpisodeNumbers = new List<int> { 3 },
-                SeasonNumber = 12,
                 Episodes = singleEpisodeList
             };
         }
